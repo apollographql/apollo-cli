@@ -67,3 +67,26 @@ SDL.
 ```bash
 rover graph introspect http://localhost:4000 | rover graph check my-graph --schema -
 ```
+
+## Git Context
+
+TODO: I'm not quite sure about how to explain the usefulness of the git info
+in studio
+
+Some commands use the context of your git project to improve the experience 
+in Apollo Studio. The checks page shows this info, and can help find and filter
+checks as well as  make it possible to link between a check and its pull request
+in GitHub.
+
+![](./assets/checks-git-info.png)
+
+By default, Rover uses the git context in all `check` and
+`push` commands, based on the directory that Rover is run from.
+
+Rover uses the following pieces of git info automatically, but each can be 
+overwritten by an environment variable:
+
+- Branch Name: `APOLLO_VCS_BRANCH`
+- Author (committer): `APOLLO_VCS_COMMITTER`
+- Commit hash (short): `APOLLO_VCS_COMMIT`
+- Sanitized Remote Url: `APOLLO_VCS_REMOTE_URL`

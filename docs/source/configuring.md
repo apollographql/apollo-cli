@@ -95,3 +95,7 @@ If present, an environment variable's value takes precedence over all other meth
 | `APOLLO_CONFIG_HOME` | The path where Rover's configuration is stored. The default value is your operating system's default configuration directory. |
 | `APOLLO_KEY` | The API key that Rover should use to authenticate with Apollo Studio. |
 | `APOLLO_TELEMETRY_DISABLED` | Set to `1` if you don't want Rover to collect anonymous usage data. |
+| `APOLLO_VCS_BRANCH` | The name of the branch in your version control system (VCS) |
+| `APOLLO_VCS_COMMIT` | The short hash or unique ID of the commit in your VCS |
+| `APOLLO_VCS_COMMITTER` | The author identifier for a commit (i.e. "Jane Doe <jane@example.com>") |
+| `APOLLO_VCS_REMOTE_URL` | The remote url for your VCS repository |
