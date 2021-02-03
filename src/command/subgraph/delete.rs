@@ -38,7 +38,7 @@ impl Delete {
     pub fn run(&self, client_config: StudioClientConfig) -> Result<RoverStdout> {
         let client = client_config.get_client(&self.profile_name)?;
         let graph_ref = self.graph.to_string();
-        tracing::info!(
+        log::info!(
             "Checking for composition errors resulting from deleting subgraph {} from {} using credentials from the {} profile.",
             Cyan.normal().paint(&self.subgraph),
             Cyan.normal().paint(&graph_ref),
@@ -63,7 +63,7 @@ impl Delete {
 
             // I chose not to error here, since this is a perfectly valid path
             if !confirm_delete()? {
-                tracing::info!("Delete cancelled by user");
+                log::info!("Delete cancelled by user");
                 return Ok(RoverStdout::None);
             }
         }
@@ -85,21 +85,21 @@ impl Delete {
 
 fn handle_dry_run_response(response: DeleteServiceResponse, subgraph: &str, graph_ref: &str) {
     if let Some(errors) = response.composition_errors {
-        tracing::warn!(
+        log::warn!(
                 "Deleting the {} subgraph from {} would result in the following composition errors: \n{}",
                 subgraph,
                 graph_ref,
                 errors.join("\n")
             );
-        tracing::warn!("Note: This is only a prediction. If the graph changes before confirming, these errors could change.");
+        log::warn!("Note: This is only a prediction. If the graph changes before confirming, these errors could change.");
     } else {
-        tracing::info!("At the time of checking, there would be no composition errors resulting from the deletion of this subgraph.");
-        tracing::warn!("Note: This is only a prediction. If the graph changes before confirming, there could be composition errors.")
+        log::info!("At the time of checking, there would be no composition errors resulting from the deletion of this subgraph.");
+        log::warn!("Note: This is only a prediction. If the graph changes before confirming, there could be composition errors.")
     }
 }
 
 fn confirm_delete() -> Result<bool> {
-    tracing::info!("Would you like to continue [y/n]");
+    log::info!("Would you like to continue [y/n]");
     let term = console::Term::stdout();
     let confirm = term.read_line()?;
     if confirm.to_lowercase() == *"y" {
@@ -111,20 +111,20 @@ fn confirm_delete() -> Result<bool> {
 
 fn handle_response(response: DeleteServiceResponse, subgraph: &str, graph_ref: &str) {
     if response.updated_gateway {
-        tracing::info!(
+        log::info!(
             "The {} subgraph was removed from {}. Remaining subgraphs were composed.",
             Cyan.normal().paint(subgraph),
             Cyan.normal().paint(graph_ref),
         )
     } else {
-        tracing::error!(
+        log::error!(
             "The gateway for {} was not updated. Check errors below.",
             Cyan.normal().paint(graph_ref)
         )
     }
 
     if let Some(errors) = response.composition_errors {
-        tracing::error!(
+        log::error!(
             "There were composition errors as a result of deleting the subgraph: \n{}",
             errors.join("\n")
         )

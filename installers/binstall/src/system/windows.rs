@@ -42,7 +42,7 @@ fn get_windows_path_var() -> Result<Option<String>, InstallerError> {
             if let Some(s) = string_from_winreg_value(&val) {
                 Ok(Some(s))
             } else {
-                tracing::warn!("the registry key HKEY_CURRENT_USER\\Environment\\PATH does not contain valid Unicode. \
+                log::warn!("the registry key HKEY_CURRENT_USER\\Environment\\PATH does not contain valid Unicode. \
                        Not modifying the PATH variable");
                 Ok(None)
             }

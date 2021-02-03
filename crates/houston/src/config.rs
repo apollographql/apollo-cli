@@ -61,9 +61,10 @@ impl Config {
 
     /// Removes all configuration files from filesystem
     pub fn clear(&self) -> Result<(), HoustonProblem> {
-        tracing::debug!(home_dir = ?self.home);
+        let home_display = self.home.display();
+        log::debug!("clearing home directory: {}", home_display);
         fs::remove_dir_all(&self.home)
-            .map_err(|_| HoustonProblem::NoConfigFound(self.home.display().to_string()))
+            .map_err(|_| HoustonProblem::NoConfigFound(home_display.to_string()))
     }
 }
 

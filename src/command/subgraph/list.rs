@@ -26,7 +26,7 @@ impl List {
     pub fn run(&self, client_config: StudioClientConfig) -> Result<RoverStdout> {
         let client = client_config.get_client(&self.profile_name)?;
 
-        tracing::info!(
+        log::info!(
             "Listing subgraphs for {} using credentials from the {} profile.",
             &self.graph,
             &self.profile_name

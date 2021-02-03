@@ -30,9 +30,9 @@ impl Install {
             .with_context(|| format!("could not install {}", &binary_name))?;
 
             if let Some(install_location) = install_location {
-                tracing::info!("{} was successfully installed to `{}`. You may need to reload your terminal for the binary to be loaded into your PATH.", &binary_name, install_location.display())
+                log::info!("{} was successfully installed to `{}`. You may need to reload your terminal for the binary to be loaded into your PATH.", &binary_name, install_location.display())
             } else {
-                tracing::info!("{} was not installed. To override the existing installation, you can pass the `--force` flag to the installer.", &binary_name);
+                log::info!("{} was not installed. To override the existing installation, you can pass the `--force` flag to the installer.", &binary_name);
             }
             Ok(RoverStdout::None)
         } else {

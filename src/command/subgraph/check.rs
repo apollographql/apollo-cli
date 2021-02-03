@@ -63,7 +63,7 @@ impl Check {
             &client,
         )?;
 
-        tracing::info!("Checked the proposed subgraph against {}", &self.graph);
+        log::info!("Checked the proposed subgraph against {}", &self.graph);
 
         match res {
             check::CheckResponse::CompositionErrors(composition_errors) => {
@@ -86,7 +86,7 @@ fn handle_checks(check_result: check::CheckResult) -> Result<RoverStdout> {
         ),
     };
 
-    tracing::info!("{}", &msg);
+    log::info!("{}", &msg);
 
     let mut num_failures = 0;
 
@@ -109,8 +109,8 @@ fn handle_checks(check_result: check::CheckResult) -> Result<RoverStdout> {
     }
 
     if let Some(url) = check_result.target_url {
-        tracing::info!("View full details here");
-        tracing::info!("{}", url.to_string());
+        log::info!("View full details here");
+        log::info!("{}", url.to_string());
     }
 
     match num_failures {
@@ -130,7 +130,7 @@ fn handle_composition_errors(
     let mut num_failures = 0;
     for error in composition_errors {
         num_failures += 1;
-        tracing::error!("{}", &error.message);
+        log::error!("{}", &error.message);
     }
     match num_failures {
         0 => Ok(RoverStdout::None),

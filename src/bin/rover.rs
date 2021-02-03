@@ -9,7 +9,6 @@ use std::{process, thread};
 fn main() {
     setup_panic!();
     if let Err(error) = run() {
-        tracing::debug!(?error);
         eprint!("{}", error);
         process::exit(1)
     } else {
@@ -20,7 +19,7 @@ fn main() {
 fn run() -> Result<()> {
     let app = cli::Rover::from_args();
     timber::init(app.log_level);
-    tracing::trace!(command_structure = ?app);
+    log::trace!("command structure:\n{:?}", &app);
 
     // attempt to create a new `Session` to capture anonymous usage data
     let output: RoverStdout = match Session::new(&app) {
@@ -30,7 +29,7 @@ fn run() -> Result<()> {
             let report_thread = thread::spawn(move || {
                 // log + ignore errors because it is not in the critical path
                 let _ = session.report().map_err(|telemetry_error| {
-                    tracing::debug!(?telemetry_error);
+                    log::debug!("{:?}", &telemetry_error);
                     telemetry_error
                 });
             });

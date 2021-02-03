@@ -51,7 +51,6 @@ impl Profile {
     ///
     /// Takes an optional `profile` argument. Defaults to `"default"`.
     pub fn get_api_key(name: &str, config: &Config) -> Result<String, HoustonProblem> {
-        tracing::debug!(APOLLO_KEY = ?config.override_api_key);
         match &config.override_api_key {
             Some(api_key) => Ok(api_key.to_string()),
             None => {
@@ -87,7 +86,7 @@ impl Profile {
     /// Deletes profile data from file system.
     pub fn delete(name: &str, config: &Config) -> Result<(), HoustonProblem> {
         let dir = Profile::dir(name, config)?;
-        tracing::debug!(dir = ?dir);
+        log::debug!("deleting profile directory \"{}\"", dir.display());
         Ok(fs::remove_dir_all(dir).map_err(|e| match e.kind() {
             std::io::ErrorKind::NotFound => HoustonProblem::ProfileNotFound(name.to_string()),
             _ => HoustonProblem::IOError(e),
@@ -106,8 +105,10 @@ impl Profile {
             for entry in entries {
                 let entry_path = entry?.path();
                 if entry_path.is_dir() {
-                    let profile = entry_path.file_stem().unwrap();
-                    tracing::debug!(profile = ?profile);
+                    let profile = entry_path
+                        .file_stem()
+                        .expect("The profile directory contains one or more invalid filenames.");
+                    log::debug!("profile: {:?}", profile);
                     profiles.push(profile.to_string_lossy().into_owned());
                 }
             }

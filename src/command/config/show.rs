@@ -26,7 +26,7 @@ impl Show {
 
         let profile = config::Profile::load(&self.name, &config, opts)?;
 
-        tracing::info!("{}: {}", &self.name, profile);
+        log::info!("{}: {}", &self.name, profile);
         Ok(RoverStdout::None)
     }
 }

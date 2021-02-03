@@ -138,9 +138,9 @@ dependencies = [
  "atty",
  "cc",
  "directories-next",
+ "log",
  "serial_test",
  "thiserror",
- "tracing",
  "which",
  "winapi",
  "winreg 0.8.0",
@@ -737,10 +737,10 @@ version = "0.0.0"
 dependencies = [
  "assert_fs",
  "directories-next",
+ "log",
  "serde",
  "thiserror",
  "toml",
- "tracing",
 ]
 
 [[package]]
@@ -1479,6 +1479,7 @@ dependencies = [
  "git_info",
  "heck",
  "houston",
+ "log",
  "predicates",
  "prettytable-rs",
  "regex",
@@ -1490,7 +1491,6 @@ dependencies = [
  "sputnik",
  "structopt",
  "timber",
- "tracing",
  "url",
  "which",
 ]
@@ -1503,12 +1503,12 @@ dependencies = [
  "chrono",
  "graphql_client",
  "http",
+ "log",
  "online",
  "reqwest",
  "serde",
  "serde_json",
  "thiserror",
- "tracing",
  "uuid",
 ]
 

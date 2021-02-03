@@ -22,7 +22,7 @@ pub struct Delete {
 impl Delete {
     pub fn run(&self, config: config::Config) -> Result<RoverStdout> {
         config::Profile::delete(&self.name, &config)?;
-        tracing::info!("Successfully deleted profile \"{}\"", &self.name);
+        log::info!("Successfully deleted profile \"{}\"", &self.name);
         Ok(RoverStdout::None)
     }
 }

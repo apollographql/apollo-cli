@@ -14,11 +14,11 @@ impl List {
     pub fn run(&self, config: config::Config) -> Result<RoverStdout> {
         let profiles = config::Profile::list(&config)?;
         if profiles.is_empty() {
-            tracing::info!("No profiles found.")
+            log::info!("No profiles found.")
         } else {
-            tracing::info!("Profiles:");
+            log::info!("Profiles:");
             for profile in profiles {
-                tracing::info!("{}", profile);
+                log::info!("{}", profile);
             }
         }
         Ok(RoverStdout::None)

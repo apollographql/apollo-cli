@@ -39,7 +39,7 @@ impl Push {
     ) -> Result<RoverStdout> {
         let client = client_config.get_client(&self.profile_name)?;
         let graph_ref = self.graph.to_string();
-        tracing::info!(
+        log::info!(
             "Pushing SDL to {} using credentials from the {} profile.",
             Cyan.normal().paint(&graph_ref),
             Yellow.normal().paint(&self.profile_name)
@@ -47,7 +47,7 @@ impl Push {
 
         let schema_document = load_schema_from_flag(&self.schema, std::io::stdin())?;
 
-        tracing::debug!("Schema Document to push:\n{}", &schema_document);
+        log::debug!("Schema Document to push:\n{}", &schema_document);
 
         let push_response = push::run(
             push::push_schema_mutation::Variables {
@@ -66,7 +66,7 @@ impl Push {
 
 /// handle all output logging from operation
 fn handle_response(graph: &GraphRef, response: push::PushResponse) -> String {
-    tracing::info!(
+    log::info!(
         "{}#{} Pushed successfully {}",
         graph,
         response.schema_hash,

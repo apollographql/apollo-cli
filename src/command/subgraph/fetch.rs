@@ -32,7 +32,7 @@ impl Fetch {
     pub fn run(&self, client_config: StudioClientConfig) -> Result<RoverStdout> {
         let client = client_config.get_client(&self.profile_name)?;
         let graph_ref = self.graph.to_string();
-        tracing::info!(
+        log::info!(
             "Fetching SDL from {} (subgraph: {}) using credentials from the {} profile.",
             Cyan.normal().paint(&graph_ref),
             Cyan.normal().paint(&self.subgraph),

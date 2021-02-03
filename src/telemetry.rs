@@ -77,14 +77,16 @@ impl Report for Rover {
         let json_args = serde_json::to_string(&self)?;
         let mut value_args = serde_json::from_str(&json_args)?;
         let serialized_command = get_command_from_args(&mut value_args);
-        tracing::debug!(serialized_command = ?serialized_command);
+        log::debug!("serialized command: {:?}", &serialized_command);
         Ok(serialized_command)
     }
 
     fn is_telemetry_enabled(&self) -> Result<bool, SputnikError> {
         let value = self.env_store.get(RoverEnvKey::TelemetryDisabled)?;
         let is_telemetry_disabled = value.is_some();
-        tracing::debug!(is_telemetry_disabled);
+        if is_telemetry_disabled {
+            log::info!("Anonymous usage reporting has been disabled.");
+        }
         Ok(!is_telemetry_disabled)
     }
 

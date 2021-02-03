@@ -26,7 +26,8 @@ impl Sensitive {
         }
 
         fs::write(&path, &data)?;
-        tracing::debug!(path = ?path, data = ?data);
+        log::debug!("saving API key to: \"{}\"", path.display());
+        log::trace!("writing TOML:\n{}", &data);
         Ok(())
     }
 
@@ -34,7 +35,8 @@ impl Sensitive {
     pub fn load(profile_name: &str, config: &Config) -> Result<Sensitive, HoustonProblem> {
         let path = Sensitive::path(profile_name, config)?;
         let data = fs::read_to_string(&path)?;
-        tracing::debug!(path = ?path, data = ?data);
+        log::debug!("loading API key from \"{}\"", path.display());
+        log::trace!("TOML contents:\n{}", &data);
         Ok(toml::from_str(&data)?)
     }
 }

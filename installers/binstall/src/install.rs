@@ -31,13 +31,13 @@ impl Installer {
             return Ok(None);
         }
 
-        tracing::info!("creating directory for binary");
+        log::info!("creating directory for binary");
         self.create_bin_dir()?;
 
-        tracing::info!("writing binary to {}", &bin_destination.display());
+        log::info!("writing binary to {}", &bin_destination.display());
         self.write_bin_to_fs()?;
 
-        tracing::info!("adding binary to PATH");
+        log::info!("adding binary to PATH");
         self.add_binary_to_path()?;
 
         Ok(Some(bin_destination))
@@ -71,8 +71,8 @@ impl Installer {
 
     fn write_bin_to_fs(&self) -> Result<(), InstallerError> {
         let bin_path = self.get_bin_path()?;
-        tracing::debug!("copying from: {}", &self.executable_location.display());
-        tracing::debug!("copying to: {}", &bin_path.display());
+        log::debug!("copying from: {}", &self.executable_location.display());
+        log::debug!("copying to: {}", &bin_path.display());
         fs::copy(&self.executable_location, &bin_path)?;
         Ok(())
     }
@@ -86,12 +86,12 @@ impl Installer {
 
         // It looks like we're at an interactive prompt, so ask the user if they'd
         // like to overwrite the previous installation.
-        tracing::info!(
+        log::info!(
             "existing {} installation found at `{}`",
             &self.binary_name,
             destination.display()
         );
-        tracing::info!("Would you like to overwrite this file? [y/N]: ");
+        log::info!("Would you like to overwrite this file? [y/N]: ");
         let mut line = String::new();
         io::stdin().read_line(&mut line)?;
 

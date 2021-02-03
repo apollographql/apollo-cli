@@ -31,13 +31,13 @@ impl RoverStdout {
                 // and nothing after the colon if you piped the output
                 // to another process or a file.
                 if atty::is(Stream::Stdout) {
-                    tracing::info!("SDL:");
+                    log::info!("SDL:");
                 }
                 println!("{}", &sdl);
             }
             RoverStdout::SchemaHash(hash) => {
                 if atty::is(Stream::Stdout) {
-                    tracing::info!("Schema Hash:");
+                    log::info!("Schema Hash:");
                 }
                 println!("{}", &hash);
             }

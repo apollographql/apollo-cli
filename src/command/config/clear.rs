@@ -15,7 +15,7 @@ pub struct Clear {}
 impl Clear {
     pub fn run(&self, config: config::Config) -> Result<RoverStdout> {
         config.clear()?;
-        tracing::info!("Successfully cleared all configuration.");
+        log::info!("Successfully cleared all configuration.");
         Ok(RoverStdout::None)
     }
 }

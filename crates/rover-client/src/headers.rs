@@ -49,7 +49,7 @@ pub fn build_studio_headers(
 
     let client_name = HeaderValue::from_str(CLIENT_NAME)?;
     headers.insert("apollographql-client-name", client_name);
-    tracing::debug!(?client_version);
+    log::trace!("client version: {}", &client_version);
     let client_version = HeaderValue::from_str(&client_version)?;
     headers.insert("apollographql-client-version", client_version);
 

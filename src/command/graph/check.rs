@@ -49,7 +49,7 @@ impl Check {
             &client,
         )?;
 
-        tracing::info!(
+        log::info!(
             "Validated the proposed subgraph against metrics from {}",
             &self.graph
         );
@@ -61,13 +61,13 @@ impl Check {
             _ => format!("Compared {} schema changes against {} operations", res.changes.len(), res.number_of_checked_operations),
         };
 
-        tracing::info!("{}", &msg);
+        log::info!("{}", &msg);
 
         let num_failures = print_changes(&res.changes);
 
         if let Some(url) = res.target_url {
-            tracing::info!("View full details here");
-            tracing::info!("{}", url.to_string());
+            log::info!("View full details here");
+            log::info!("{}", url.to_string());
         }
 
         match num_failures {
