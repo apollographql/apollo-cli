@@ -17,6 +17,7 @@ pub enum RoverStdout {
     SDL(String),
     SchemaHash(String),
     SubgraphList(ListDetails),
+    Introspection(String),
     None,
 }
 
@@ -69,6 +70,12 @@ impl RoverStdout {
                     "View full details at {}/graph/{}/service-list",
                     details.root_url, details.graph_name
                 );
+            }
+            RoverStdout::Introspection(introspection_response) => {
+                if atty::is(Stream::Stdout) {
+                    tracing::info!("Introspection Response:");
+                }
+                println!("{}", &introspection_response);
             }
             RoverStdout::None => (),
         }
