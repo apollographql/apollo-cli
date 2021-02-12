@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::blocking::Client;
+use crate::introspection::GraphQLSchema;
 use crate::RoverClientError;
 use graphql_client::*;
 
@@ -37,6 +38,7 @@ pub fn run(client: &Client) -> Result<IntrospectionResponse, RoverClientError> {
 
 fn build_response(response: introspection_query::ResponseData) -> IntrospectionResponse {
     println!("{:?}", &response);
+    let schema = GraphQLSchema::from(response);
     IntrospectionResponse {
         result: "output".to_string(),
     }

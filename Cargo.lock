@@ -660,6 +660,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "graphql-parser"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d1abd4ce5247dfc04a03ccde70f87a048458c9356c7e41d21ad8c407b3dde6f2"
+dependencies = [
+ "combine",
+ "thiserror",
+]
+
+[[package]]
 name = "graphql_client"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -679,7 +689,7 @@ checksum = "8e304c223c809b3bff4614018f8e6d9edb176b31d64ed9ea48b6ae8b1a03abb9"
 dependencies = [
  "failure",
  "graphql-introspection-query",
- "graphql-parser",
+ "graphql-parser 0.2.3",
  "heck",
  "lazy_static",
  "proc-macro2",
@@ -1585,6 +1595,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "chrono",
+ "graphql-parser 0.3.0",
  "graphql_client",
  "http",
  "online",
