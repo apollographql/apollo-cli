@@ -1,47 +1,99 @@
 use crate::query::graph::introspect;
 use graphql_parser::schema::{Document, Text};
+use serde::Deserialize;
 use std::convert;
-#[derive(Debug, Clone, PartialEq)]
-pub struct GraphQLSchema {
-    schema: String,
+
+pub type Introspection = introspect::introspection_query::ResponseData;
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Schema {
+    pub query_type: Option<SchemaQueryType>,
+    pub mutation_type: Option<SchemaMutationType>,
+    pub subscription_type: Option<SchemaSubscriptionType>,
+    pub types: Option<Vec<Option<SchemaTypes>>>,
+    pub description: Option<String>,
+    directives: Option<Vec<Option<SchemaDirectives>>>,
 }
 
-impl GraphQLSchema {
-    pub fn new() -> Self {
-        Self {
-            schema: "Nori".to_string(),
+impl Schema {
+    pub fn with_introspection(src: Introspection) -> Self {
+        Schema {
+            query_type: src.schema.unwrap_or_else(|s| s.query_type.name),
+            mutation_type: schema.mutation_type,
+            subscription_type: schema.subscription_type,
+            types: schema_types(&schema),
+            description: schema.description,
+            directives: schema_directives(&schema),
         }
     }
 }
 
-impl Default for GraphQLSchema {
-    fn default() -> Self {
-        Self {
-            schema: "Chashu".to_string(),
-        }
-    }
-}
+// impl Default for Schema {
+//     fn default() -> Self {
+//         Self {
+//             schema: "Chashu".to_string(),
+//         }
+//     }
+// }
 
-impl<'a, T> convert::From<Document<'a, T>> for GraphQLSchema
+impl<'a, T> convert::From<Document<'a, T>> for Schema
 where
     T: Text<'a>,
 {
-    fn from(_ast: Document<'a, T>) -> GraphQLSchema {
+    fn from(_ast: Document<'a, T>) -> Schema {
         unimplemented!();
     }
 }
 
-type IntrospectionResponse = introspect::introspection_query::ResponseData;
-impl convert::From<IntrospectionResponse> for GraphQLSchema {
-    fn from(_src: IntrospectionResponse) -> GraphQLSchema {
-        unimplemented!()
+impl convert::From<Introspection> for Schema {
+    fn from(src: Introspection) -> Schema {
+        Schema::with_introspection(src)
     }
 }
 
-impl convert::Into<IntrospectionResponse> for GraphQLSchema {
-    fn into(self) -> IntrospectionResponse {
+impl convert::Into<Introspection> for Schema {
+    fn into(self) -> Introspection {
         unimplemented!();
     }
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SchemaQueryType {
+    pub name: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SchemaMutationType {
+    pub name: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SchemaSubscriptionType {
+    pub name: Option<String>,
+}
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SchemaDirectives {
+    pub name: Option<String>,
+    pub description: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SchemaTypes {
+    #[serde(flatten)]
+    pub type_map: TypeMap,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TypeMap {
+    pub name: Option<String>,
+    pub description: Option<String>,
 }
 
 #[cfg(test)]
