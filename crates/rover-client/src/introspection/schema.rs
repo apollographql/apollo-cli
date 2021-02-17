@@ -8,23 +8,31 @@ pub type Introspection = introspect::introspection_query::ResponseData;
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Schema {
-    pub query_type: Option<SchemaQueryType>,
-    pub mutation_type: Option<SchemaMutationType>,
-    pub subscription_type: Option<SchemaSubscriptionType>,
-    pub types: Option<Vec<Option<SchemaTypes>>>,
-    pub description: Option<String>,
+    query_type: Option<SchemaQueryType>,
+    mutation_type: Option<SchemaMutationType>,
+    subscription_type: Option<>,
+    types: Option<Vec<Option<SchemaTypes>>>,
+    description: Option<String>,
     directives: Option<Vec<Option<SchemaDirectives>>>,
 }
 
 impl Schema {
     pub fn with_introspection(src: Introspection) -> Self {
-        Schema {
-            query_type: src.schema.unwrap_or_else(|s| s.query_type.name),
-            mutation_type: schema.mutation_type,
-            subscription_type: schema.subscription_type,
-            types: schema_types(&schema),
-            description: schema.description,
-            directives: schema_directives(&schema),
+        if let Some(schema) = src.schema {
+            Schema {
+                query_type: SchemaQueryType {
+                    name: schema.query_type.name,
+                },
+                mutation_type: SchemaMutationType {
+                    name: schema.mutation_type.name,
+                }
+                subscription_type: schema.subscription_type,
+                types: schema_types(&schema),
+                description: schema.description,
+                directives: schema_directives(&schema),
+            }
+        } else {
+            unimplemented();
         }
     }
 }
