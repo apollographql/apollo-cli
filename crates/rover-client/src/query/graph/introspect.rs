@@ -6,14 +6,13 @@ use crate::RoverClientError;
 use graphql_client::*;
 
 #[derive(GraphQLQuery)]
-// The paths are relative to the directory where your `Cargo.toml` is located.
-// Both json and the GraphQL schema language are supported as sources for the schema
 #[graphql(
     query_path = "src/query/graph/introspect_query.graphql",
     schema_path = "src/query/graph/introspect_schema.graphql",
     response_derives = "PartialEq, Debug, Serialize, Deserialize",
     deprecated = "warn"
 )]
+
 /// This struct is used to generate the module containing `Variables` and
 /// `ResponseData` structs.
 /// Snake case of this name is the mod name. i.e. introspection_query
