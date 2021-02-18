@@ -2,44 +2,45 @@
 authors = ["Apollo Developers <opensource@apollographql.com>"]
 edition = "2018"
 name = "rover"
-version = "0.0.1"
 repository = "https://github.com/apollographql/rover/"
+version = "0.0.1"
 
 [dependencies]
 
 # workspace deps
-binstall = { path = "./installers/binstall" }
-houston = { path = "./crates/houston" }
-robot-panic = { path = "./crates/robot-panic" }
-rover-client = { path = "./crates/rover-client" }
-sputnik = { path = "./crates/sputnik" }
-timber = { path = "./crates/timber" }
+binstall = {path = "./installers/binstall"}
+houston = {path = "./crates/houston"}
+robot-panic = {path = "./crates/robot-panic"}
+rover-client = {path = "./crates/rover-client"}
+sdl-encoder = {path = "./crates/sdl-encoder"}
+sputnik = {path = "./crates/sputnik"}
+timber = {path = "./crates/timber"}
 
 # crates.io deps
+ansi_term = "0.12.1"
 anyhow = "1.0.38"
 atty = "0.2.14"
-ansi_term = "0.12.1"
 chrono = "0.4"
 console = "0.14.0"
-git2 = "0.13.17"
 git-url-parse = "0.3.1"
+git2 = "0.13.17"
 heck = "0.3.2"
 humantime = "2.1.0"
+os_info = "3.0"
 prettytable-rs = "0.8.0"
+regex = "1"
 serde = "1.0"
 serde_json = "1.0"
 structopt = "0.3.21"
 tracing = "0.1.22"
-regex = "1"
 url = "2.2.0"
-os_info = "3.0"
 
 [dev-dependencies]
 assert_cmd = "1.0.1"
 assert_fs = "1.0.0"
+predicates = "1.0.5"
 rustversion = "1.0.4"
 serial_test = "0.5.0"
-predicates = "1.0.5"
 
 [workspace]
 members = [".", "crates/*", "installers/binstall"]

@@ -1,0 +1,13 @@
+[package]
+authors = ["lrlna <shestak.irina@gmail.com>"]
+edition = "2018"
+name = "sdl-encoder"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[dev-dependencies]
+pretty_assertions = "0.6.1"
+indoc = "1.0.3"

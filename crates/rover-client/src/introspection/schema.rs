@@ -1,49 +1,42 @@
+//! Schema code generation module used to work with Introspection result.
 use crate::query::graph::introspect;
 use graphql_parser::schema::{Document, Text};
 use serde::Deserialize;
 use std::convert;
 
 pub type Introspection = introspect::introspection_query::ResponseData;
+pub type SchemaTypes = introspect::introspection_query::IntrospectionQuerySchemaTypes;
+pub type SchemaDirectives = introspect::introspection_query::IntrospectionQuerySchemaDirectives;
 
-#[derive(Clone, Debug, Deserialize)]
+// TODO: @lrlna it would be *really* nice for this to have a Clone derive.
+// Since at this point we are using graphql_client's introspection types, and
+// they don't provide a clone implementation, we need to figure out a way to
+// cast the types provided to us to our own types and then create our own clone
+// impl. Maybe??
+
+/// A representation of a GraphQL Schema.
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Schema {
-    query_type: Option<SchemaQueryType>,
-    mutation_type: Option<SchemaMutationType>,
-    subscription_type: Option<>,
-    types: Option<Vec<Option<SchemaTypes>>>,
-    description: Option<String>,
-    directives: Option<Vec<Option<SchemaDirectives>>>,
+    types: Vec<SchemaTypes>,
+    directives: Vec<SchemaDirectives>,
 }
 
 impl Schema {
+    // todo: @lrlna this could perhaps be private, since its likely to only be
+    // used in `Schema::from(introspection_result)` form.
+
+    /// Create an instance of Schema with an Introspection Result.
     pub fn with_introspection(src: Introspection) -> Self {
         if let Some(schema) = src.schema {
-            Schema {
-                query_type: SchemaQueryType {
-                    name: schema.query_type.name,
-                },
-                mutation_type: SchemaMutationType {
-                    name: schema.mutation_type.name,
-                }
-                subscription_type: schema.subscription_type,
-                types: schema_types(&schema),
-                description: schema.description,
-                directives: schema_directives(&schema),
-            }
-        } else {
-            unimplemented();
+            return Schema {
+                types: schema.types,
+                directives: schema.directives,
+            };
         }
+        unimplemented!()
     }
 }
-
-// impl Default for Schema {
-//     fn default() -> Self {
-//         Self {
-//             schema: "Chashu".to_string(),
-//         }
-//     }
-// }
 
 impl<'a, T> convert::From<Document<'a, T>> for Schema
 where
@@ -66,71 +59,12 @@ impl convert::Into<Introspection> for Schema {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SchemaQueryType {
-    pub name: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SchemaMutationType {
-    pub name: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SchemaSubscriptionType {
-    pub name: Option<String>,
-}
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SchemaDirectives {
-    pub name: Option<String>,
-    pub description: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SchemaTypes {
-    #[serde(flatten)]
-    pub type_map: TypeMap,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TypeMap {
-    pub name: Option<String>,
-    pub description: Option<String>,
-}
-
 #[cfg(test)]
 mod tests {
     use graphql_parser::schema::parse_schema;
 
     #[test]
     fn it_build_simple_schema() {
-        // let ast_from_sdl = parse_schema::<String>(
-        //     r#"
-        //     """
-        //     Simple schema
-        //     """
-        //     schema {
-        //         query: Simple
-        //     }
-        //     """
-        //     This is a simple type
-        //     """
-        //     type Simple {
-        //         """
-        //         This is a string field
-        //         """
-        //         string: String
-        //     }
-        // "#,
-        // )
-        // .unwrap()
-        // .to_owned();
         let ast = parse_schema::<String>(
             r#"
             schema {
@@ -152,7 +86,5 @@ mod tests {
         .unwrap()
         .to_owned();
         dbg!(ast);
-        // dbg!(ast_from_sdl);
-        // assert_eq!("cat", "cat");
     }
 }
