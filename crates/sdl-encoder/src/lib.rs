@@ -28,13 +28,13 @@
 //!       """
 //!       Good cats get treats
 //!       """
-//!       treat: String!,
+//!       treat: String!
 //!     }
 //!     """
 //!     Example Query type
 //!     """
 //!     type Query {
-//!       cat: [SpaceCatEnum!]!,
+//!       cat: [SpaceCatEnum!]!
 //!     }
 //!
 //! "#})
@@ -59,7 +59,7 @@ impl Schema {
     }
 
     /// Adds a new Type Definition.
-    pub fn type_(&mut self, type_: TypeDef) {
+    pub fn type_(&mut self, type_: TypeDef<'_>) {
         self.buf.push_str(&type_.to_string());
     }
 
@@ -67,7 +67,7 @@ impl Schema {
     ///
     /// The schema type is only used when the root GraphQL type is different
     /// from default GraphQL types.
-    pub fn schema(&mut self, schema: SchemaDef) {
+    pub fn schema(&mut self, schema: SchemaDef<'_>) {
         self.buf.push_str(&schema.to_string());
     }
 
@@ -83,17 +83,17 @@ impl Default for Schema {
     }
 }
 
-/// Type Definition used to define different types in SDL.
+/// Object Type Definition used to define different objects in SDL.
 #[derive(Debug)]
-pub struct TypeDef {
+pub struct TypeDef<'a> {
     name: String,
     description: Option<String>,
-    fields: Vec<Field>,
+    fields: Vec<Field<'a>>,
 }
 
-impl TypeDef {
+impl<'a> TypeDef<'a> {
     /// Create a new instance of TypeDef with a name.
-    pub fn new(name: String, field: Field) -> Self {
+    pub fn new(name: String, field: Field<'a>) -> Self {
         Self {
             name,
             description: None,
@@ -107,12 +107,12 @@ impl TypeDef {
     }
 
     /// Push a Field to type def's fields vector.
-    pub fn field(&mut self, field: Field) {
+    pub fn field(&mut self, field: Field<'a>) {
         self.fields.push(field)
     }
 }
 
-impl Display for TypeDef {
+impl<'a> Display for TypeDef<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(description) = &self.description {
             writeln!(f, "\"\"\"\n{}\n\"\"\"", description)?;
@@ -130,15 +130,15 @@ impl Display for TypeDef {
 }
 
 /// A definition used when a root GraphQL type differs from default types.
-#[derive(Debug)]
-pub struct SchemaDef {
+#[derive(Debug, Clone)]
+pub struct SchemaDef<'a> {
     description: Option<String>,
-    fields: Vec<Field>,
+    fields: Vec<Field<'a>>,
 }
 
-impl SchemaDef {
+impl<'a> SchemaDef<'a> {
     /// Create a new instance of SchemaDef.
-    pub fn new(field: Field) -> Self {
+    pub fn new(field: Field<'a>) -> Self {
         Self {
             description: None,
             fields: vec![field],
@@ -151,12 +151,12 @@ impl SchemaDef {
     }
 
     /// Push a Field to schema def's fields vector.
-    pub fn field(&mut self, field: Field) {
+    pub fn field(&mut self, field: Field<'a>) {
         self.fields.push(field)
     }
 }
 
-impl Display for SchemaDef {
+impl<'a> Display for SchemaDef<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(description) = &self.description {
             writeln!(f, "\"\"\"\n{}\n\"\"\"", description)?;
@@ -173,37 +173,111 @@ impl Display for SchemaDef {
     }
 }
 
-/// Define whether a Field is a vector.
-#[derive(Debug, PartialEq, Copy, Clone)]
-pub enum VecState {
-    /// The type is not a vector: e.g. `String`.
-    None,
-    /// The type is a nullable vector: e.g. `[String]`.
-    Nullable,
-    /// The type is a non nullable vector: e.g. `[String]!`.
-    NonNullable,
-}
-/// Field in a given SDL type.
-#[derive(Debug, PartialEq, Clone)]
-pub struct Field {
+/// Input types used to describe more complex objects in SDL.
+#[derive(Debug, Clone)]
+pub struct InputDef<'a> {
     description: Option<String>,
     name: String,
-    type_: String,
-    default: Option<String>,
-    is_nullable: bool,
-    vec_state: VecState,
+    fields: Vec<Field<'a>>,
 }
 
-impl Field {
+impl<'a> InputDef<'a> {
+    /// Create a new instance of TypeDef with a name.
+    pub fn new(name: String, field: Field<'a>) -> Self {
+        Self {
+            name,
+            description: None,
+            fields: vec![field],
+        }
+    }
+
+    /// Set the TypeDef's description field.
+    pub fn description(&mut self, description: String) {
+        self.description = Some(description)
+    }
+
+    /// Push a Field to type def's fields vector.
+    pub fn field(&mut self, field: Field<'a>) {
+        self.fields.push(field)
+    }
+}
+
+impl<'a> Display for InputDef<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(description) = &self.description {
+            writeln!(f, "\"\"\"\n{}\n\"\"\"", description)?;
+        }
+
+        let mut fields = String::new();
+        for field in &self.fields {
+            fields += &format!("\n{}", field.to_string());
+        }
+
+        write!(f, "type {} {{", &self.name)?;
+        write!(f, "{}", fields)?;
+        writeln!(f, "\n}}")
+    }
+}
+
+/// Define Field Type.
+#[derive(Debug, PartialEq, Clone)]
+pub enum FieldType<'a> {
+    /// The list field type.
+    List {
+        /// List field type.
+        ty: &'a FieldType<'a>,
+        /// Nullable list.
+        is_nullable: bool,
+    },
+    /// The type field type.
+    Type {
+        /// Type type.
+        ty: String,
+        /// Default field type type.
+        default: Option<&'a FieldType<'a>>,
+        /// Nullable type.
+        is_nullable: bool,
+    },
+}
+
+impl<'a> Display for FieldType<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            FieldType::List { ty, is_nullable } => {
+                let null = if *is_nullable { "" } else { "!" };
+                write!(f, "[{}]{}", ty, null)
+            }
+            FieldType::Type {
+                ty,
+                // TODO(@lrlna): figure out the best way to encode default
+                // values in fields
+                default: _,
+                is_nullable,
+            } => {
+                let null = if *is_nullable { "" } else { "!" };
+                write!(f, "{}{}", ty, null)
+            }
+        }
+    }
+}
+
+/// Field in a given SDL type.
+#[derive(Debug, PartialEq, Clone)]
+pub struct Field<'a> {
+    description: Option<String>,
+    //TODO(@lrlna): fields for input objects can also take arguments. This
+    //struct should also account for that.
+    name: String,
+    type_: FieldType<'a>,
+}
+
+impl<'a> Field<'a> {
     /// Create a new instance of Field.
-    pub fn new(name: String, type_: String) -> Self {
+    pub fn new(name: String, type_: FieldType<'a>) -> Self {
         Self {
             description: None,
             name,
             type_,
-            default: None,
-            is_nullable: true,
-            vec_state: VecState::None,
         }
     }
 
@@ -211,49 +285,19 @@ impl Field {
     pub fn description(&mut self, description: String) {
         self.description = Some(description);
     }
-
-    /// Set the field's default.
-    pub fn default(&mut self, default: String) {
-        self.default = Some(default);
-    }
-
-    /// Set the field's is nullable.
-    pub fn is_nullable(&mut self, nullable: bool) {
-        self.is_nullable = nullable;
-    }
-
-    /// Set the field's vec state.
-    pub fn vec_state(&mut self, vec_state: VecState) {
-        self.vec_state = vec_state;
-    }
 }
 
-impl Display for Field {
+impl<'a> Display for Field<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(description) = &self.description {
             // Let's indent description on a field level for now, as all fields
             // are always on the same level and are indented by 2 spaces.
             writeln!(f, "  \"\"\"\n  {}\n  \"\"\"", description)?;
         }
-        let null = if self.is_nullable { "!" } else { "" };
-        let type_ = match self.vec_state {
-            VecState::None => format!("{}{}", &self.type_, null),
-            VecState::Nullable => format!("[{}{}]", &self.type_, null),
-            VecState::NonNullable => format!("[{}{}]!", &self.type_, null),
-        };
-        let default = if let Some(default) = &self.default {
-            match self.vec_state {
-                VecState::None => format!(" = {}{}", default, null),
-                VecState::Nullable => format!(" = [{}{}]", default, null),
-                VecState::NonNullable => format!(" = [{}{}]!", default, null),
-            }
-        } else {
-            String::new()
-        };
         // TODO(@lrlna): double check with folks if it's a valid SDL if the last
         // field in a type has a comma. If not, we can move the 'comma logic' to
         // TypeDef/SchemaDef Display implementations.
-        write!(f, "  {}: {}{},", &self.name, type_, default)
+        write!(f, "  {}: {}", self.name, self.type_)
     }
 }
 
@@ -266,8 +310,12 @@ mod tests {
     #[test]
     fn smoke_test() {
         let mut schema = Schema::new();
-        let mut field = Field::new("cat".to_string(), "String".to_string());
-        field.vec_state(VecState::NonNullable);
+        let field_type = FieldType::Type {
+            ty: "String".to_string(),
+            is_nullable: false,
+            default: None,
+        };
+        let mut field = Field::new("cat".to_string(), field_type);
         field.description("Very good cats".to_string());
         let mut type_ = TypeDef::new("Query".to_string(), field.clone());
         let mut schema_def = SchemaDef::new(field);
@@ -286,7 +334,7 @@ mod tests {
                   """
                   Very good cats
                   """
-                  cat: [String!]!,
+                  cat: String!
                 }
                 """
                 Example Query type
@@ -295,7 +343,7 @@ mod tests {
                   """
                   Very good cats
                   """
-                  cat: [String!]!,
+                  cat: String!
                 }
             "# }
         );
@@ -305,12 +353,22 @@ mod tests {
     fn smoke_test_2() {
         let mut schema = Schema::new();
 
-        let mut type_field = Field::new("cat".to_string(), "SpaceCatEnum".to_string());
-        type_field.vec_state(VecState::NonNullable);
+        let field_type_1 = FieldType::Type {
+            ty: "SpaceCatEnum".to_string(),
+            is_nullable: true,
+            default: None,
+        };
+
+        let field_type_2 = FieldType::List {
+            ty: &field_type_1.clone(),
+            is_nullable: false,
+        };
+
+        let type_field = Field::new("cat".to_string(), field_type_2);
         let mut type_ = TypeDef::new("Query".to_string(), type_field);
         type_.description("Example Query type".to_string());
 
-        let mut schema_field = Field::new("treat".to_string(), "String".to_string());
+        let mut schema_field = Field::new("treat".to_string(), field_type_1);
         schema_field.description("Good cats get treats".to_string());
         let mut schema_def = SchemaDef::new(schema_field);
         schema_def.description("Example schema Def".to_string());
@@ -326,13 +384,13 @@ mod tests {
                   """
                   Good cats get treats
                   """
-                  treat: String!,
+                  treat: SpaceCatEnum
                 }
                 """
                 Example Query type
                 """
                 type Query {
-                  cat: [SpaceCatEnum!]!,
+                  cat: [SpaceCatEnum]!
                 }
         "#}
         )
@@ -340,34 +398,68 @@ mod tests {
 
     #[test]
     fn it_encodes_fields() {
-        let mut field = Field::new("cat".to_string(), "String".to_string());
-        field.is_nullable(false);
+        let field_type_1 = FieldType::Type {
+            ty: "SpaceProgram".to_string(),
+            is_nullable: true,
+            default: None,
+        };
+
+        let field_type_2 = FieldType::List {
+            ty: &field_type_1,
+            is_nullable: true,
+        };
+
+        let mut field = Field::new("cat".to_string(), field_type_2);
         field.description("Very good cats".to_string());
-        field.vec_state(VecState::Nullable);
 
         assert_eq!(
             field.to_string(),
             r#"  """
   Very good cats
   """
-  cat: [String],"#
+  cat: [SpaceProgram]"#
         );
 
-        let mut field_2 = Field::new("spaceCat".to_string(), "SpaceProgram".to_string());
+        let field_type_4 = FieldType::Type {
+            ty: "SpaceProgram".to_string(),
+            is_nullable: false,
+            default: None,
+        };
+
+        let field_type_5 = FieldType::List {
+            ty: &field_type_4,
+            is_nullable: false,
+        };
+
+        let mut field_2 = Field::new("spaceCat".to_string(), field_type_5);
         field_2.description("Very good space cats".to_string());
-        field_2.default("VoskhodCats".to_string());
-        field_2.vec_state(VecState::NonNullable);
 
         assert_eq!(
             field_2.to_string(),
             r#"  """
   Very good space cats
   """
-  spaceCat: [SpaceProgram!]! = [VoskhodCats!]!,"#
+  spaceCat: [SpaceProgram!]!"#
         );
 
-        let field_3 = Field::new("spaceCat".to_string(), "SpaceProgram".to_string());
+        let field_type_6 = FieldType::Type {
+            ty: "SpaceProgram".to_string(),
+            is_nullable: true,
+            default: None,
+        };
 
-        assert_eq!(field_3.to_string(), r#"  spaceCat: SpaceProgram!,"#);
+        let field_type_7 = FieldType::List {
+            ty: &field_type_6,
+            is_nullable: false,
+        };
+
+        let field_type_8 = FieldType::List {
+            ty: &field_type_7,
+            is_nullable: false,
+        };
+
+        let field_3 = Field::new("spaceCat".to_string(), field_type_8);
+
+        assert_eq!(field_3.to_string(), r#"  spaceCat: [[SpaceProgram]!]!"#);
     }
 }
