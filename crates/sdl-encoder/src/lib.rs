@@ -71,6 +71,11 @@ impl Schema {
         self.buf.push_str(&schema.to_string());
     }
 
+    /// Adds a new Input object definition
+    pub fn input(&mut self, input: InputDef<'_>) {
+        self.buf.push_str(&input.to_string());
+    }
+
     /// Return the encoded SDL string after all types have been
     pub fn finish(self) -> String {
         self.buf
@@ -213,7 +218,7 @@ impl<'a> Display for InputDef<'a> {
             fields += &format!("\n{}", field.to_string());
         }
 
-        write!(f, "type {} {{", &self.name)?;
+        write!(f, "input {} {{", &self.name)?;
         write!(f, "{}", fields)?;
         writeln!(f, "\n}}")
     }
@@ -317,12 +322,14 @@ mod tests {
         };
         let mut field = Field::new("cat".to_string(), field_type);
         field.description("Very good cats".to_string());
-        let mut type_ = TypeDef::new("Query".to_string(), field.clone());
-        let mut schema_def = SchemaDef::new(field);
-        type_.description("Example Query type".to_string());
+        let mut type_def = TypeDef::new("Query".to_string(), field.clone());
+        let mut schema_def = SchemaDef::new(field.clone());
+        let input_def = InputDef::new("SpaceCat".to_string(), field);
+        type_def.description("Example Query type".to_string());
         schema_def.description("Simple schema".to_string());
         schema.schema(schema_def);
-        schema.type_(type_);
+        schema.type_(type_def);
+        schema.input(input_def);
 
         assert_eq!(
             schema.finish(),
@@ -340,6 +347,12 @@ mod tests {
                 Example Query type
                 """
                 type Query {
+                  """
+                  Very good cats
+                  """
+                  cat: String!
+                }
+                input SpaceCat {
                   """
                   Very good cats
                   """
