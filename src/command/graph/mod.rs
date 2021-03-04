@@ -1,4 +1,5 @@
 mod check;
+mod introspect;
 mod fetch;
 mod push;
 
@@ -26,6 +27,9 @@ pub enum Command {
 
     /// Push an updated graph schema to the Apollo graph registry
     Push(push::Push),
+
+    /// Introspect current graph schema.
+    Introspect(introspect::Introspect),
 }
 
 impl Graph {
@@ -38,6 +42,7 @@ impl Graph {
             Command::Fetch(command) => command.run(client_config),
             Command::Push(command) => command.run(client_config, git_context),
             Command::Check(command) => command.run(client_config, git_context),
+            Command::Introspect(command) => command.run(),
         }
     }
 }

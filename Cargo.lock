@@ -1641,6 +1641,7 @@ dependencies = [
  "http",
  "online",
  "reqwest",
+ "sdl-encoder",
  "serde",
  "serde_json",
  "thiserror",

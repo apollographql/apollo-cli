@@ -1,11 +1,14 @@
 //! Schema code generation module used to work with Introspection result.
 use crate::query::graph::introspect;
 use graphql_parser::schema::{Document, Text};
+use sdl_encoder::{Field, FieldType, ObjectDef, Schema as SDL};
 use serde::Deserialize;
 use std::convert;
 
 pub type Introspection = introspect::introspection_query::ResponseData;
 pub type SchemaTypes = introspect::introspection_query::IntrospectionQuerySchemaTypes;
+pub type __TypeKind = introspect::introspection_query::__TypeKind;
+// pub type FullType = introspect::introspection_query::IntrospectionQuerySchemaTypes::FullType;
 pub type SchemaDirectives = introspect::introspection_query::IntrospectionQuerySchemaDirectives;
 
 // TODO: @lrlna it would be *really* nice for this to have a Clone derive.
@@ -29,12 +32,48 @@ impl Schema {
     /// Create an instance of Schema with an Introspection Result.
     pub fn with_introspection(src: Introspection) -> Self {
         if let Some(schema) = src.schema {
-            return Schema {
+            Schema {
                 types: schema.types,
                 directives: schema.directives,
-            };
+            }
+        } else {
+            todo!()
         }
-        unimplemented!()
+    }
+
+    pub fn parse_schema(self) -> String {
+        let mut sdl = SDL::new();
+        for type_ in self.types {
+            match type_.full_type.kind {
+                __TypeKind::OBJECT => {
+                    let mut object_def =
+                        ObjectDef::new(type_.full_type.name.unwrap_or("".to_string()));
+                    if let Some(field) = type_.full_type.fields {
+                        for f in field {
+                            match f.type_.type_ref.kind {
+                                __TypeKind::SCALAR => {
+                                    let field_type = FieldType::Type {
+                                        ty: f.type_.type_ref.name.unwrap_or("".to_string()),
+                                        is_nullable: true,
+                                        default: None,
+                                    };
+                                    let mut field_def = Field::new(f.name, field_type);
+                                    field_def.description(f.description.unwrap_or("".to_string()));
+                                    object_def.field(field_def);
+                                }
+                                _ => (),
+                            }
+                        }
+                        sdl.object(object_def);
+                    }
+                }
+                // __TypeKind::SCALAR => unimplemented!(),
+                // __TypeKind::ENUM => unimplemented!(),
+                _ => (),
+            }
+        }
+
+        sdl.finish()
     }
 }
 

@@ -4,14 +4,14 @@
 //!
 //! ## Example
 //! ```rust
-//! use sdl_encoder::{Schema, TypeDef, SchemaDef, Field, VecState};
+//! use sdl_encoder::{Schema, ObjectDef, SchemaDef, Field, VecState};
 //! use indoc::indoc;
 //!
 //! let mut schema = Schema::new();
 //!
-//! let mut type_field = Field::new("cat".to_string(), "SpaceCatEnum".to_string());
-//! type_field.vec_state(VecState::NonNullable);
-//! let mut type_ = TypeDef::new("Query".to_string(), type_field);
+//! let mut object_field = Field::new("cat".to_string(), "SpaceCatEnum".to_string());
+//! object_field.vec_state(VecState::NonNullable);
+//! let mut type_ = ObjectDef::new("Query".to_string(), object_field);
 //! type_.description("Example Query type".to_string());
 //!
 //! let mut schema_field = Field::new("treat".to_string(), "String".to_string());
@@ -59,8 +59,8 @@ impl Schema {
     }
 
     /// Adds a new Type Definition.
-    pub fn type_(&mut self, type_: TypeDef<'_>) {
-        self.buf.push_str(&type_.to_string());
+    pub fn object(&mut self, object: ObjectDef<'_>) {
+        self.buf.push_str(&object.to_string());
     }
 
     /// Adds a new Schema Definition.
@@ -90,23 +90,23 @@ impl Default for Schema {
 
 /// Object Type Definition used to define different objects in SDL.
 #[derive(Debug)]
-pub struct TypeDef<'a> {
+pub struct ObjectDef<'a> {
     name: String,
     description: Option<String>,
     fields: Vec<Field<'a>>,
 }
 
-impl<'a> TypeDef<'a> {
-    /// Create a new instance of TypeDef with a name.
-    pub fn new(name: String, field: Field<'a>) -> Self {
+impl<'a> ObjectDef<'a> {
+    /// Create a new instance of ObjectDef with a name.
+    pub fn new(name: String) -> Self {
         Self {
             name,
             description: None,
-            fields: vec![field],
+            fields: Vec::new(),
         }
     }
 
-    /// Set the TypeDef's description field.
+    /// Set the ObjectDef's description field.
     pub fn description(&mut self, description: String) {
         self.description = Some(description)
     }
@@ -117,7 +117,7 @@ impl<'a> TypeDef<'a> {
     }
 }
 
-impl<'a> Display for TypeDef<'a> {
+impl Display for ObjectDef<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(description) = &self.description {
             writeln!(f, "\"\"\"\n{}\n\"\"\"", description)?;
@@ -161,7 +161,7 @@ impl<'a> SchemaDef<'a> {
     }
 }
 
-impl<'a> Display for SchemaDef<'a> {
+impl Display for SchemaDef<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(description) = &self.description {
             writeln!(f, "\"\"\"\n{}\n\"\"\"", description)?;
@@ -187,7 +187,7 @@ pub struct InputDef<'a> {
 }
 
 impl<'a> InputDef<'a> {
-    /// Create a new instance of TypeDef with a name.
+    /// Create a new instance of ObjectDef with a name.
     pub fn new(name: String, field: Field<'a>) -> Self {
         Self {
             name,
@@ -196,7 +196,7 @@ impl<'a> InputDef<'a> {
         }
     }
 
-    /// Set the TypeDef's description field.
+    /// Set the ObjectDef's description field.
     pub fn description(&mut self, description: String) {
         self.description = Some(description)
     }
@@ -207,7 +207,7 @@ impl<'a> InputDef<'a> {
     }
 }
 
-impl<'a> Display for InputDef<'a> {
+impl Display for InputDef<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(description) = &self.description {
             writeln!(f, "\"\"\"\n{}\n\"\"\"", description)?;
@@ -245,7 +245,7 @@ pub enum FieldType<'a> {
     },
 }
 
-impl<'a> Display for FieldType<'a> {
+impl Display for FieldType<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             FieldType::List { ty, is_nullable } => {
@@ -292,7 +292,7 @@ impl<'a> Field<'a> {
     }
 }
 
-impl<'a> Display for Field<'a> {
+impl Display for Field<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(description) = &self.description {
             // Let's indent description on a field level for now, as all fields
@@ -301,7 +301,7 @@ impl<'a> Display for Field<'a> {
         }
         // TODO(@lrlna): double check with folks if it's a valid SDL if the last
         // field in a type has a comma. If not, we can move the 'comma logic' to
-        // TypeDef/SchemaDef Display implementations.
+        // ObjectDef/SchemaDef Display implementations.
         write!(f, "  {}: {}", self.name, self.type_)
     }
 }
@@ -322,13 +322,15 @@ mod tests {
         };
         let mut field = Field::new("cat".to_string(), field_type);
         field.description("Very good cats".to_string());
-        let mut type_def = TypeDef::new("Query".to_string(), field.clone());
+        let mut object_def = ObjectDef::new("Query".to_string());
+        object_def.description("Example Query type".to_string());
+        object_def.field(field.clone());
+
         let mut schema_def = SchemaDef::new(field.clone());
         let input_def = InputDef::new("SpaceCat".to_string(), field);
-        type_def.description("Example Query type".to_string());
         schema_def.description("Simple schema".to_string());
         schema.schema(schema_def);
-        schema.type_(type_def);
+        schema.object(object_def);
         schema.input(input_def);
 
         assert_eq!(
@@ -377,16 +379,17 @@ mod tests {
             is_nullable: false,
         };
 
-        let type_field = Field::new("cat".to_string(), field_type_2);
-        let mut type_ = TypeDef::new("Query".to_string(), type_field);
-        type_.description("Example Query type".to_string());
+        let object_field = Field::new("cat".to_string(), field_type_2);
+        let mut object_def = ObjectDef::new("Query".to_string());
+        object_def.description("Example Query type".to_string());
+        object_def.field(object_field);
 
         let mut schema_field = Field::new("treat".to_string(), field_type_1);
         schema_field.description("Good cats get treats".to_string());
         let mut schema_def = SchemaDef::new(schema_field);
         schema_def.description("Example schema Def".to_string());
         schema.schema(schema_def);
-        schema.type_(type_);
+        schema.object(object_def);
         assert_eq!(
             schema.finish(),
             indoc! { r#"
