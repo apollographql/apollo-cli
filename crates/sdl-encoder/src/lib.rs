@@ -76,6 +76,11 @@ impl Schema {
         self.buf.push_str(&input.to_string());
     }
 
+    /// Adds a new Enum type definition
+    pub fn enum_(&mut self, enum_: EnumDef) {
+        self.buf.push_str(&enum_.to_string());
+    }
+
     /// Return the encoded SDL string after all types have been
     pub fn finish(self) -> String {
         self.buf
@@ -306,6 +311,52 @@ impl Display for Field<'_> {
     }
 }
 
+/// Enum type in SDL.
+#[derive(Debug, PartialEq, Clone)]
+pub struct EnumDef {
+    name: String,
+    description: Option<String>,
+    variants: Vec<String>,
+}
+
+impl EnumDef {
+    /// Create a new Enum type for SDL.
+    pub fn new(name: String) -> Self {
+        Self {
+            name,
+            description: None,
+            variants: Vec::new(),
+        }
+    }
+
+    /// Set the enum's description.
+    pub fn description(&mut self, description: String) {
+        self.description = Some(description);
+    }
+
+    /// Set the EnumDef's variants.
+    pub fn variant(&mut self, variant: String) {
+        self.variants.push(variant)
+    }
+}
+
+impl Display for EnumDef {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(description) = &self.description {
+            writeln!(f, "\"\"\"\n{}\n\"\"\"", description)?;
+        }
+
+        let mut variants = String::new();
+        for variant in &self.variants {
+            variants += &format!("\n  {}", variant);
+        }
+
+        write!(f, "enum {} {{", self.name)?;
+        write!(f, "{}", variants)?;
+        writeln!(f, "\n}}")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -315,6 +366,8 @@ mod tests {
     #[test]
     fn smoke_test() {
         let mut schema = Schema::new();
+
+        // create a field
         let field_type = FieldType::Type {
             ty: "String".to_string(),
             is_nullable: false,
@@ -322,15 +375,26 @@ mod tests {
         };
         let mut field = Field::new("cat".to_string(), field_type);
         field.description("Very good cats".to_string());
+
+        // a schema definition
+        let mut schema_def = SchemaDef::new(field.clone());
+        schema_def.description("Simple schema".to_string());
+        schema.schema(schema_def);
+
+        // object type defintion
         let mut object_def = ObjectDef::new("Query".to_string());
         object_def.description("Example Query type".to_string());
         object_def.field(field.clone());
-
-        let mut schema_def = SchemaDef::new(field.clone());
-        let input_def = InputDef::new("SpaceCat".to_string(), field);
-        schema_def.description("Simple schema".to_string());
-        schema.schema(schema_def);
         schema.object(object_def);
+
+        // enum definition
+        let mut enum_ = EnumDef::new("VeryGoodCats".to_string());
+        enum_.variant("NORI".to_string());
+        enum_.variant("CHASHU".to_string());
+        schema.enum_(enum_);
+
+        // input definition
+        let input_def = InputDef::new("SpaceCat".to_string(), field);
         schema.input(input_def);
 
         assert_eq!(
@@ -353,6 +417,10 @@ mod tests {
                   Very good cats
                   """
                   cat: String!
+                }
+                enum VeryGoodCats {
+                  NORI
+                  CHASHU
                 }
                 input SpaceCat {
                   """

@@ -1,7 +1,7 @@
 //! Schema code generation module used to work with Introspection result.
 use crate::query::graph::introspect;
 use graphql_parser::schema::{Document, Text};
-use sdl_encoder::{Field, FieldType, ObjectDef, Schema as SDL};
+use sdl_encoder::{EnumDef, Field, FieldType, ObjectDef, Schema as SDL};
 use serde::Deserialize;
 use std::convert;
 
@@ -68,7 +68,15 @@ impl Schema {
                     }
                 }
                 // __TypeKind::SCALAR => unimplemented!(),
-                // __TypeKind::ENUM => unimplemented!(),
+                __TypeKind::ENUM => {
+                    let mut enum_def = EnumDef::new(type_.full_type.name.unwrap_or("".to_string()));
+                    if let Some(enums) = type_.full_type.enum_values {
+                        for enum_ in enums {
+                            enum_def.variant(enum_.name);
+                        }
+                    }
+                    sdl.enum_(enum_def);
+                }
                 _ => (),
             }
         }
