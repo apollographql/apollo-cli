@@ -255,6 +255,25 @@ pub enum FieldType {
     },
 }
 
+impl FieldType {
+    /// Create new List Field Type.
+    pub fn new_list(ty: FieldType, is_nullable: bool) -> Self {
+        Self::List {
+            ty: Box::new(ty),
+            is_nullable,
+        }
+    }
+
+    /// Create new Type Field Type.
+    pub fn new_type(ty: String, is_nullable: bool, default: Option<FieldType>) -> Self {
+        Self::Type {
+            ty,
+            is_nullable,
+            default: default.map(Box::new),
+        }
+    }
+}
+
 impl Display for FieldType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
