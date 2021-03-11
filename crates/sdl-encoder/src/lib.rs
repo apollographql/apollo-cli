@@ -59,7 +59,7 @@ impl Schema {
     }
 
     /// Adds a new Type Definition.
-    pub fn object(&mut self, object: ObjectDef<'_>) {
+    pub fn object(&mut self, object: ObjectDef) {
         self.buf.push_str(&object.to_string());
     }
 
@@ -67,12 +67,12 @@ impl Schema {
     ///
     /// The schema type is only used when the root GraphQL type is different
     /// from default GraphQL types.
-    pub fn schema(&mut self, schema: SchemaDef<'_>) {
+    pub fn schema(&mut self, schema: SchemaDef) {
         self.buf.push_str(&schema.to_string());
     }
 
     /// Adds a new Input object definition
-    pub fn input(&mut self, input: InputDef<'_>) {
+    pub fn input(&mut self, input: InputDef) {
         self.buf.push_str(&input.to_string());
     }
 
@@ -100,13 +100,13 @@ impl Default for Schema {
 
 /// Object Type Definition used to define different objects in SDL.
 #[derive(Debug)]
-pub struct ObjectDef<'a> {
+pub struct ObjectDef {
     name: String,
     description: Option<String>,
-    fields: Vec<Field<'a>>,
+    fields: Vec<Field>,
 }
 
-impl<'a> ObjectDef<'a> {
+impl ObjectDef {
     /// Create a new instance of ObjectDef with a name.
     pub fn new(name: String) -> Self {
         Self {
@@ -122,12 +122,12 @@ impl<'a> ObjectDef<'a> {
     }
 
     /// Push a Field to type def's fields vector.
-    pub fn field(&mut self, field: Field<'a>) {
+    pub fn field(&mut self, field: Field) {
         self.fields.push(field)
     }
 }
 
-impl Display for ObjectDef<'_> {
+impl Display for ObjectDef {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(description) = &self.description {
             writeln!(f, "\"\"\"\n{}\n\"\"\"", description)?;
@@ -146,14 +146,14 @@ impl Display for ObjectDef<'_> {
 
 /// A definition used when a root GraphQL type differs from default types.
 #[derive(Debug, Clone)]
-pub struct SchemaDef<'a> {
+pub struct SchemaDef {
     description: Option<String>,
-    fields: Vec<Field<'a>>,
+    fields: Vec<Field>,
 }
 
-impl<'a> SchemaDef<'a> {
+impl SchemaDef {
     /// Create a new instance of SchemaDef.
-    pub fn new(field: Field<'a>) -> Self {
+    pub fn new(field: Field) -> Self {
         Self {
             description: None,
             fields: vec![field],
@@ -166,12 +166,12 @@ impl<'a> SchemaDef<'a> {
     }
 
     /// Push a Field to schema def's fields vector.
-    pub fn field(&mut self, field: Field<'a>) {
+    pub fn field(&mut self, field: Field) {
         self.fields.push(field)
     }
 }
 
-impl Display for SchemaDef<'_> {
+impl Display for SchemaDef {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(description) = &self.description {
             writeln!(f, "\"\"\"\n{}\n\"\"\"", description)?;
@@ -190,15 +190,15 @@ impl Display for SchemaDef<'_> {
 
 /// Input types used to describe more complex objects in SDL.
 #[derive(Debug, Clone)]
-pub struct InputDef<'a> {
+pub struct InputDef {
     description: Option<String>,
     name: String,
-    fields: Vec<Field<'a>>,
+    fields: Vec<Field>,
 }
 
-impl<'a> InputDef<'a> {
+impl InputDef {
     /// Create a new instance of ObjectDef with a name.
-    pub fn new(name: String, field: Field<'a>) -> Self {
+    pub fn new(name: String, field: Field) -> Self {
         Self {
             name,
             description: None,
@@ -212,12 +212,12 @@ impl<'a> InputDef<'a> {
     }
 
     /// Push a Field to type def's fields vector.
-    pub fn field(&mut self, field: Field<'a>) {
+    pub fn field(&mut self, field: Field) {
         self.fields.push(field)
     }
 }
 
-impl Display for InputDef<'_> {
+impl Display for InputDef {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(description) = &self.description {
             writeln!(f, "\"\"\"\n{}\n\"\"\"", description)?;
@@ -236,11 +236,11 @@ impl Display for InputDef<'_> {
 
 /// Define Field Type.
 #[derive(Debug, PartialEq, Clone)]
-pub enum FieldType<'a> {
+pub enum FieldType {
     /// The list field type.
     List {
         /// List field type.
-        ty: &'a FieldType<'a>,
+        ty: Box<FieldType>,
         /// Nullable list.
         is_nullable: bool,
     },
@@ -249,13 +249,13 @@ pub enum FieldType<'a> {
         /// Type type.
         ty: String,
         /// Default field type type.
-        default: Option<&'a FieldType<'a>>,
+        default: Option<Box<FieldType>>,
         /// Nullable type.
         is_nullable: bool,
     },
 }
 
-impl Display for FieldType<'_> {
+impl Display for FieldType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             FieldType::List { ty, is_nullable } => {
@@ -278,17 +278,17 @@ impl Display for FieldType<'_> {
 
 /// Field in a given SDL type.
 #[derive(Debug, PartialEq, Clone)]
-pub struct Field<'a> {
+pub struct Field {
     description: Option<String>,
     //TODO(@lrlna): fields for input objects can also take arguments. This
     //struct should also account for that.
     name: String,
-    type_: FieldType<'a>,
+    type_: FieldType,
 }
 
-impl<'a> Field<'a> {
+impl Field {
     /// Create a new instance of Field.
-    pub fn new(name: String, type_: FieldType<'a>) -> Self {
+    pub fn new(name: String, type_: FieldType) -> Self {
         Self {
             description: None,
             name,
@@ -302,7 +302,7 @@ impl<'a> Field<'a> {
     }
 }
 
-impl Display for Field<'_> {
+impl Display for Field {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(description) = &self.description {
             // Let's indent description on a field level for now, as all fields
@@ -488,7 +488,7 @@ mod tests {
         };
 
         let field_type_2 = FieldType::List {
-            ty: &field_type_1.clone(),
+            ty: Box::new(field_type_1.clone()),
             is_nullable: false,
         };
 
@@ -534,7 +534,7 @@ mod tests {
         };
 
         let field_type_2 = FieldType::List {
-            ty: &field_type_1,
+            ty: Box::new(field_type_1),
             is_nullable: true,
         };
 
@@ -556,7 +556,7 @@ mod tests {
         };
 
         let field_type_5 = FieldType::List {
-            ty: &field_type_4,
+            ty: Box::new(field_type_4),
             is_nullable: false,
         };
 
@@ -578,12 +578,12 @@ mod tests {
         };
 
         let field_type_7 = FieldType::List {
-            ty: &field_type_6,
+            ty: Box::new(field_type_6),
             is_nullable: false,
         };
 
         let field_type_8 = FieldType::List {
-            ty: &field_type_7,
+            ty: Box::new(field_type_7),
             is_nullable: false,
         };
 

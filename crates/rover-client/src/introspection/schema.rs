@@ -7,8 +7,8 @@ use std::convert;
 
 pub type Introspection = introspect::introspection_query::ResponseData;
 pub type SchemaTypes = introspect::introspection_query::IntrospectionQuerySchemaTypes;
+pub type FullTypeFields = introspect::introspection_query::FullTypeFields;
 pub type __TypeKind = introspect::introspection_query::__TypeKind;
-// pub type FullType = introspect::introspection_query::IntrospectionQuerySchemaTypes::FullType;
 pub type SchemaDirectives = introspect::introspection_query::IntrospectionQuerySchemaDirectives;
 
 // TODO: @lrlna it would be *really* nice for this to have a Clone derive.
@@ -44,56 +44,79 @@ impl Schema {
     pub fn encode_schema(self) -> String {
         let mut sdl = SDL::new();
         for type_ in self.types {
-            match type_.full_type.kind {
-                __TypeKind::OBJECT => {
-                    let mut object_def =
-                        ObjectDef::new(type_.full_type.name.unwrap_or("".to_string()));
-                    if let Some(field) = type_.full_type.fields {
-                        for f in field {
-                            match f.type_.type_ref.kind {
-                                __TypeKind::SCALAR => {
-                                    let field_type = FieldType::Type {
-                                        ty: f.type_.type_ref.name.unwrap_or("".to_string()),
-                                        is_nullable: true,
-                                        default: None,
-                                    };
-                                    let mut field_def = Field::new(f.name, field_type);
-                                    field_def.description(f.description);
-                                    object_def.field(field_def);
-                                }
-                                __TypeKind::NON_NULL => (),
-                                __TypeKind::OBJECT => (),
-                                __TypeKind::INTERFACE => (),
-                                __TypeKind::UNION => (),
-                                __TypeKind::ENUM => (),
-                                __TypeKind::INPUT_OBJECT => (),
-                                __TypeKind::LIST => (),
-                                _ => (),
-                            }
-                        }
-                        sdl.object(object_def);
-                    }
-                }
-                __TypeKind::SCALAR => {
-                    let mut scalar_def =
-                        ScalarDef::new(type_.full_type.name.unwrap_or("".to_string()));
-                    scalar_def.description(type_.full_type.description);
-                    sdl.scalar(scalar_def);
-                }
-                __TypeKind::ENUM => {
-                    let mut enum_def = EnumDef::new(type_.full_type.name.unwrap_or("".to_string()));
-                    if let Some(enums) = type_.full_type.enum_values {
-                        for enum_ in enums {
-                            enum_def.variant(enum_.name);
-                        }
-                    }
-                    sdl.enum_(enum_def);
-                }
-                _ => (),
-            }
+            Schema::encode_full_type(type_, &mut sdl)
         }
 
         sdl.finish()
+    }
+
+    fn encode_full_type(type_: SchemaTypes, sdl: &mut SDL) {
+        match type_.full_type.kind {
+            __TypeKind::OBJECT => {
+                let mut object_def =
+                    ObjectDef::new(type_.full_type.name.unwrap_or_else(String::new));
+                if let Some(field) = type_.full_type.fields {
+                    for f in field {
+                        let field_def = Schema::encode_field(f);
+                        object_def.field(field_def);
+                    }
+                    sdl.object(object_def);
+                }
+            }
+            __TypeKind::SCALAR => {
+                let mut scalar_def =
+                    ScalarDef::new(type_.full_type.name.unwrap_or_else(String::new));
+                scalar_def.description(type_.full_type.description);
+                sdl.scalar(scalar_def);
+            }
+            __TypeKind::ENUM => {
+                let mut enum_def = EnumDef::new(type_.full_type.name.unwrap_or_else(String::new));
+                if let Some(enums) = type_.full_type.enum_values {
+                    for enum_ in enums {
+                        enum_def.variant(enum_.name);
+                    }
+                }
+                sdl.enum_(enum_def);
+            }
+            _ => (),
+        }
+    }
+
+    fn encode_field(field: FullTypeFields) -> Field {
+        use introspect::introspection_query::__TypeKind::*;
+        let type_ref = field.type_.type_ref;
+
+        match type_ref.kind {
+            SCALAR | OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT => {
+                let field_type = FieldType::Type {
+                    ty: type_ref.name.unwrap_or_else(String::new),
+                    is_nullable: true,
+                    default: None,
+                };
+                let mut field_def = Field::new(field.name, field_type);
+                field_def.description(field.description);
+                field_def
+            }
+            NON_NULL => {
+                let type_ref = type_ref.of_type.unwrap();
+                match type_ref.kind {
+                    SCALAR | OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT => {
+                        let field_type = FieldType::Type {
+                            ty: type_ref.name.unwrap_or_else(String::new),
+                            is_nullable: false,
+                            default: None,
+                        };
+                        let mut field_def = Field::new(field.name, field_type);
+                        field_def.description(field.description);
+                        field_def
+                    }
+                    LIST => todo!(),
+                    ty => panic!("Unknown type: {:?}", ty),
+                }
+            }
+            LIST => todo!(),
+            Other(ty) => panic!("Unknown type: {}", ty),
+        }
     }
 }
 
