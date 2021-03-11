@@ -81,6 +81,11 @@ impl Schema {
         self.buf.push_str(&enum_.to_string());
     }
 
+    /// Adds a new Enum type definition
+    pub fn scalar(&mut self, scalar: ScalarDef) {
+        self.buf.push_str(&scalar.to_string());
+    }
+
     /// Return the encoded SDL string after all types have been
     pub fn finish(self) -> String {
         self.buf
@@ -112,8 +117,8 @@ impl<'a> ObjectDef<'a> {
     }
 
     /// Set the ObjectDef's description field.
-    pub fn description(&mut self, description: String) {
-        self.description = Some(description)
+    pub fn description(&mut self, description: Option<String>) {
+        self.description = description
     }
 
     /// Push a Field to type def's fields vector.
@@ -156,8 +161,8 @@ impl<'a> SchemaDef<'a> {
     }
 
     /// Set the schema def's description.
-    pub fn description(&mut self, description: String) {
-        self.description = Some(description)
+    pub fn description(&mut self, description: Option<String>) {
+        self.description = description
     }
 
     /// Push a Field to schema def's fields vector.
@@ -202,8 +207,8 @@ impl<'a> InputDef<'a> {
     }
 
     /// Set the ObjectDef's description field.
-    pub fn description(&mut self, description: String) {
-        self.description = Some(description)
+    pub fn description(&mut self, description: Option<String>) {
+        self.description = description
     }
 
     /// Push a Field to type def's fields vector.
@@ -292,8 +297,8 @@ impl<'a> Field<'a> {
     }
 
     /// Set the field's description.
-    pub fn description(&mut self, description: String) {
-        self.description = Some(description);
+    pub fn description(&mut self, description: Option<String>) {
+        self.description = description;
     }
 }
 
@@ -330,8 +335,8 @@ impl EnumDef {
     }
 
     /// Set the enum's description.
-    pub fn description(&mut self, description: String) {
-        self.description = Some(description);
+    pub fn description(&mut self, description: Option<String>) {
+        self.description = description;
     }
 
     /// Set the EnumDef's variants.
@@ -357,6 +362,38 @@ impl Display for EnumDef {
     }
 }
 
+/// Scalar type for SDL.
+#[derive(Debug, PartialEq, Clone)]
+pub struct ScalarDef {
+    name: String,
+    description: Option<String>,
+}
+
+impl ScalarDef {
+    /// Create a new instance of Scalar type.
+    pub fn new(name: String) -> Self {
+        Self {
+            name,
+            description: None,
+        }
+    }
+
+    /// Set the scalar def's description.
+    pub fn description(&mut self, description: Option<String>) {
+        self.description = description;
+    }
+}
+
+impl Display for ScalarDef {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(description) = &self.description {
+            writeln!(f, "\"\"\"\n{}\n\"\"\"", description)?;
+        }
+
+        writeln!(f, "scalar {}", self.name)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -374,16 +411,16 @@ mod tests {
             default: None,
         };
         let mut field = Field::new("cat".to_string(), field_type);
-        field.description("Very good cats".to_string());
+        field.description(Some("Very good cats".to_string()));
 
         // a schema definition
         let mut schema_def = SchemaDef::new(field.clone());
-        schema_def.description("Simple schema".to_string());
+        schema_def.description(Some("Simple schema".to_string()));
         schema.schema(schema_def);
 
         // object type defintion
         let mut object_def = ObjectDef::new("Query".to_string());
-        object_def.description("Example Query type".to_string());
+        object_def.description(Some("Example Query type".to_string()));
         object_def.field(field.clone());
         schema.object(object_def);
 
@@ -392,6 +429,10 @@ mod tests {
         enum_.variant("NORI".to_string());
         enum_.variant("CHASHU".to_string());
         schema.enum_(enum_);
+
+        let mut scalar = ScalarDef::new("NoriCacheControl".to_string());
+        scalar.description(Some("Scalar description".to_string()));
+        schema.scalar(scalar);
 
         // input definition
         let input_def = InputDef::new("SpaceCat".to_string(), field);
@@ -422,6 +463,10 @@ mod tests {
                   NORI
                   CHASHU
                 }
+                """
+                Scalar description
+                """
+                scalar NoriCacheControl
                 input SpaceCat {
                   """
                   Very good cats
@@ -449,13 +494,13 @@ mod tests {
 
         let object_field = Field::new("cat".to_string(), field_type_2);
         let mut object_def = ObjectDef::new("Query".to_string());
-        object_def.description("Example Query type".to_string());
+        object_def.description(Some("Example Query type".to_string()));
         object_def.field(object_field);
 
         let mut schema_field = Field::new("treat".to_string(), field_type_1);
-        schema_field.description("Good cats get treats".to_string());
+        schema_field.description(Some("Good cats get treats".to_string()));
         let mut schema_def = SchemaDef::new(schema_field);
-        schema_def.description("Example schema Def".to_string());
+        schema_def.description(Some("Example schema Def".to_string()));
         schema.schema(schema_def);
         schema.object(object_def);
         assert_eq!(
@@ -494,7 +539,7 @@ mod tests {
         };
 
         let mut field = Field::new("cat".to_string(), field_type_2);
-        field.description("Very good cats".to_string());
+        field.description(Some("Very good cats".to_string()));
 
         assert_eq!(
             field.to_string(),
@@ -516,7 +561,7 @@ mod tests {
         };
 
         let mut field_2 = Field::new("spaceCat".to_string(), field_type_5);
-        field_2.description("Very good space cats".to_string());
+        field_2.description(Some("Very good space cats".to_string()));
 
         assert_eq!(
             field_2.to_string(),

@@ -1,7 +1,7 @@
 //! Schema code generation module used to work with Introspection result.
 use crate::query::graph::introspect;
 use graphql_parser::schema::{Document, Text};
-use sdl_encoder::{EnumDef, Field, FieldType, ObjectDef, Schema as SDL};
+use sdl_encoder::{EnumDef, Field, FieldType, ObjectDef, ScalarDef, Schema as SDL};
 use serde::Deserialize;
 use std::convert;
 
@@ -41,7 +41,7 @@ impl Schema {
         }
     }
 
-    pub fn parse_schema(self) -> String {
+    pub fn encode_schema(self) -> String {
         let mut sdl = SDL::new();
         for type_ in self.types {
             match type_.full_type.kind {
@@ -58,16 +58,28 @@ impl Schema {
                                         default: None,
                                     };
                                     let mut field_def = Field::new(f.name, field_type);
-                                    field_def.description(f.description.unwrap_or("".to_string()));
+                                    field_def.description(f.description);
                                     object_def.field(field_def);
                                 }
+                                __TypeKind::NON_NULL => (),
+                                __TypeKind::OBJECT => (),
+                                __TypeKind::INTERFACE => (),
+                                __TypeKind::UNION => (),
+                                __TypeKind::ENUM => (),
+                                __TypeKind::INPUT_OBJECT => (),
+                                __TypeKind::LIST => (),
                                 _ => (),
                             }
                         }
                         sdl.object(object_def);
                     }
                 }
-                // __TypeKind::SCALAR => unimplemented!(),
+                __TypeKind::SCALAR => {
+                    let mut scalar_def =
+                        ScalarDef::new(type_.full_type.name.unwrap_or("".to_string()));
+                    scalar_def.description(type_.full_type.description);
+                    sdl.scalar(scalar_def);
+                }
                 __TypeKind::ENUM => {
                     let mut enum_def = EnumDef::new(type_.full_type.name.unwrap_or("".to_string()));
                     if let Some(enums) = type_.full_type.enum_values {

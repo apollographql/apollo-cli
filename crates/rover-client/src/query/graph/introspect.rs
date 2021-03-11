@@ -38,7 +38,7 @@ pub fn run(client: &Client) -> Result<IntrospectionResponse, RoverClientError> {
 fn build_response(response: introspection_query::ResponseData) -> IntrospectionResponse {
     let schema = Schema::from(response);
     IntrospectionResponse {
-        result: schema.parse_schema(),
+        result: schema.encode_schema(),
     }
     // IntrospectionResponse {
     //     result: "output".to_string(),
