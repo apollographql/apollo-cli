@@ -10,6 +10,13 @@ pub enum RoverClientError {
         msg: String,
     },
 
+    /// Failed to parse Introspection Response coming from server.
+    #[error("{msg}")]
+    IntrospectionError {
+        /// Introspection Error coming from schema encoder.
+        msg: String,
+    },
+
     /// Tried to build a [HeaderMap] with an invalid header name.
     #[error("invalid header name")]
     InvalidHeaderName(#[from] reqwest::header::InvalidHeaderName),

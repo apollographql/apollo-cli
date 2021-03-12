@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, convert::TryFrom};
 
 use crate::blocking::Client;
 use crate::introspection::Schema;
@@ -32,15 +32,16 @@ pub struct IntrospectionResponse {
 pub fn run(client: &Client) -> Result<IntrospectionResponse, RoverClientError> {
     let variables = introspection_query::Variables {};
     let response_data = client.post::<IntrospectionQuery>(variables, &HashMap::new())?;
-    Ok(build_response(response_data))
+    build_response(response_data)
 }
 
-fn build_response(response: introspection_query::ResponseData) -> IntrospectionResponse {
-    let schema = Schema::from(response);
-    IntrospectionResponse {
-        result: schema.encode_schema(),
+fn build_response(
+    response: introspection_query::ResponseData,
+) -> Result<IntrospectionResponse, RoverClientError> {
+    match Schema::try_from(response) {
+        Ok(schema) => Ok(IntrospectionResponse {
+            result: schema.encode(),
+        }),
+        Err(msg) => Err(RoverClientError::IntrospectionError { msg: msg.into() }),
     }
-    // IntrospectionResponse {
-    //     result: "output".to_string(),
-    // }
 }
