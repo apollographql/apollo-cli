@@ -1,0 +1,9 @@
+[subgraphs]
+
+[subgraphs.films]
+url = "https://films.example.com"
+schema = "./bad-films.graphql"
+
+[subgraphs.people]
+url = "https://people.example.com"
+schema = "./good-people.graphql"

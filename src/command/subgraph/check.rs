@@ -157,9 +157,8 @@ fn handle_checks(check_result: check::CheckResult) -> Result<RoverStdout> {
 fn handle_composition_errors(
     composition_errors: &[check::check_partial_schema_query::CheckPartialSchemaQueryServiceCheckPartialSchemaCompositionValidationResultErrors],
 ) -> Result<RoverStdout> {
-    let mut num_failures = 0;
+    let num_failures = composition_errors.len();
     for error in composition_errors {
-        num_failures += 1;
         eprintln!("{} {}", Red.bold().paint("error:"), &error.message);
     }
     match num_failures {

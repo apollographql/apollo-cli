@@ -1,0 +1,17 @@
+type Film {
+  id: ID!
+  title: String
+  actors: [Person]
+  director: Person
+}
+
+extend type Person @key(fields: "idd") {
+  id: ID! @external
+  appearedIn: [Film]
+  directed: [Film]
+}
+
+extend type Query {
+  film(id: ID!): Film!
+  films: [Film]
+}

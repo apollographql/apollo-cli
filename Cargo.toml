@@ -19,13 +19,13 @@ timber = { path = "./crates/timber" }
 anyhow = "1.0.38"
 atty = "0.2.14"
 ansi_term = "0.12.1"
-camino = "1.0.2"
+camino = { version = "1.0.2", features = ["serde1"] }
 billboard = { git = "https://github.com/EverlastingBugstopper/billboard.git", branch = "main" }
 chrono = "0.4"
 console = "0.14.0"
 git2 = "0.13.17"
 git-url-parse = "0.3.1"
-harmonizer = { git = "https://github.com/apollographql/federation.git", branch = "main" }
+harmonizer = { path = "../federation/harmonizer" }
 heck = "0.3.2"
 humantime = "2.1.0"
 opener = "0.4.1"

@@ -219,6 +219,9 @@ name = "camino"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cd065703998b183ed0b348a22555691373a9345a1431141e5778b48bb17e4703"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "cargo_gn"
@@ -835,7 +838,6 @@ dependencies = [
 [[package]]
 name = "harmonizer"
 version = "0.1.0"
-source = "git+https://github.com/apollographql/federation?branch=main#79d600025e664be590054fb5ec9d2a5a4bafe3ea"
 dependencies = [
  "anyhow",
  "deno_core",
