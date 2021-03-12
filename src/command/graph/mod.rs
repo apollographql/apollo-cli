@@ -1,3 +1,4 @@
+mod build;
 mod check;
 mod fetch;
 mod push;
@@ -17,9 +18,14 @@ pub struct Graph {
 
 #[derive(Debug, Serialize, StructOpt)]
 pub enum Command {
+    /// Builds a graph from multiple subgraphs
+    Build(build::Build),
+
     /// Check for breaking changes in a local graph schema
     /// against a graph schema in the Apollo graph registry
     Check(check::Check),
+
+    /// Composes multiple subgraphs into
 
     /// Fetch a graph schema from the Apollo graph registry
     Fetch(fetch::Fetch),
@@ -35,9 +41,10 @@ impl Graph {
         git_context: GitContext,
     ) -> Result<RoverStdout> {
         match &self.command {
+            Command::Check(command) => command.run(client_config, git_context),
+            Command::Build(command) => command.run(),
             Command::Fetch(command) => command.run(client_config),
             Command::Push(command) => command.run(client_config, git_context),
-            Command::Check(command) => command.run(client_config, git_context),
         }
     }
 }
