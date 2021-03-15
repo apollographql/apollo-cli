@@ -1,14 +1,14 @@
 //! Schema code generation module used to work with Introspection result.
 use crate::query::graph::introspect;
-use sdl_encoder::{EnumDef, Field, FieldType, ObjectDef, ScalarDef, Schema as SDL};
+use sdl_encoder::{Directive, EnumDef, Field, FieldType, ObjectDef, ScalarDef, Schema as SDL};
 use serde::Deserialize;
 use std::convert::TryFrom;
 
 pub type Introspection = introspect::introspection_query::ResponseData;
 pub type SchemaTypes = introspect::introspection_query::IntrospectionQuerySchemaTypes;
+pub type SchemaDirectives = introspect::introspection_query::IntrospectionQuerySchemaDirectives;
 pub type FullTypeFields = introspect::introspection_query::FullTypeFields;
 pub type __TypeKind = introspect::introspection_query::__TypeKind;
-pub type SchemaDirectives = introspect::introspection_query::IntrospectionQuerySchemaDirectives;
 
 /// A representation of a GraphQL Schema.
 ///
@@ -24,11 +24,29 @@ impl Schema {
     /// Encode Schema into an SDL.
     pub fn encode(self) -> String {
         let mut sdl = SDL::new();
+
+        for directive in self.directives {
+            Self::encode_directives(directive, &mut sdl)
+        }
+
         for type_ in self.types {
             Self::encode_full_type(type_, &mut sdl)
         }
 
         sdl.finish()
+    }
+
+    fn encode_directives(directive: SchemaDirectives, sdl: &mut SDL) {
+        let mut directive_ = Directive::new(directive.name);
+        directive_.description(directive.description);
+        for location in directive.locations {
+            // Location is of a __DirectiveLocation enum that doesn't implement
+            // Display (meaning we can't just do .to_string). This next line
+            // just forces it into a String with format! debug.
+            directive_.location(format!("{:?}", location));
+        }
+
+        sdl.directive(directive_)
     }
 
     fn encode_full_type(type_: SchemaTypes, sdl: &mut SDL) {

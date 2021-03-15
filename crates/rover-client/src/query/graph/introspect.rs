@@ -32,12 +32,15 @@ pub struct IntrospectionResponse {
 pub fn run(client: &Client) -> Result<IntrospectionResponse, RoverClientError> {
     let variables = introspection_query::Variables {};
     let response_data = client.post::<IntrospectionQuery>(variables, &HashMap::new())?;
+    // println!("{:?}", &response_data);
+    // println!("{:?}", serde_json::to_string_pretty(&response_data)?);
     build_response(response_data)
 }
 
 fn build_response(
     response: introspection_query::ResponseData,
 ) -> Result<IntrospectionResponse, RoverClientError> {
+    // todo!()
     match Schema::try_from(response) {
         Ok(schema) => Ok(IntrospectionResponse {
             result: schema.encode(),

@@ -98,6 +98,9 @@ pub use object_def::ObjectDef;
 mod scalar_def;
 pub use scalar_def::ScalarDef;
 
+mod directive_def;
+pub use directive_def::Directive;
+
 mod enum_def;
 pub use enum_def::EnumDef;
 
@@ -117,6 +120,11 @@ impl Schema {
     /// Creates a new instance of Schema.
     pub fn new() -> Self {
         Self { buf: String::new() }
+    }
+
+    /// Adds a new Directive Definition.
+    pub fn directive(&mut self, directive: Directive) {
+        self.buf.push_str(&directive.to_string());
     }
 
     /// Adds a new Type Definition.
@@ -169,6 +177,14 @@ mod tests {
     fn smoke_test() {
         let mut schema = Schema::new();
 
+        // create a directive
+        let mut directive = Directive::new("infer".to_string());
+        directive.description(Some("Infer field types from field values.".to_string()));
+        directive.location("OBJECT".to_string());
+        directive.location("FIELD_DEFINITION".to_string());
+        directive.location("INPUT_FIELD_DEFINITION".to_string());
+        schema.directive(directive);
+
         // create a field
         let field_type = FieldType::Type {
             ty: "String".to_string(),
@@ -206,6 +222,10 @@ mod tests {
         assert_eq!(
             schema.finish(),
             indoc! { r#"
+                """
+                Infer field types from field values.
+                """
+                directive @infer on OBJECT | FIELD_DEFINITION | INPUT_FIELD_DEFINITION
                 """
                 Simple schema
                 """

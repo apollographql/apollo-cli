@@ -34,9 +34,6 @@ impl Display for Field {
             // are always on the same level and are indented by 2 spaces.
             writeln!(f, "  \"\"\"\n  {}\n  \"\"\"", description)?;
         }
-        // TODO(@lrlna): double check with folks if it's a valid SDL if the last
-        // field in a type has a comma. If not, we can move the 'comma logic' to
-        // ObjectDef/SchemaDef Display implementations.
         write!(f, "  {}: {}", self.name, self.type_)
     }
 }
