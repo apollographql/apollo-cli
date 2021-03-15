@@ -41,6 +41,22 @@ impl FieldType {
             default: default.map(Box::new),
         }
     }
+
+    /// Set is_nullable in all variants.
+    pub fn set_is_nullable(&mut self, nullable: bool) {
+        match self {
+            FieldType::List { is_nullable, .. } => *is_nullable = nullable,
+            FieldType::Type { is_nullable, .. } => *is_nullable = nullable,
+        }
+    }
+
+    /// Get is_nullable in all variants.
+    pub fn is_nullable(&self) -> bool {
+        match self {
+            FieldType::List { is_nullable, .. } => *is_nullable,
+            FieldType::Type { is_nullable, .. } => *is_nullable,
+        }
+    }
 }
 
 impl Display for FieldType {

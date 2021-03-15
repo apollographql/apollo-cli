@@ -81,210 +81,31 @@ impl Schema {
         }
     }
 
-    // NOTE(lrlna): We manually unroll our ofTypes instead of recursing here
-    // because nested types coming in from Introspection Result are all
-    // different ... types:
-    //
-    // TypeRefOfType
-    // TypeRefOfTypeType
-    // TypeRefOfTypeOfTypeOfType
-    // TypeRefOfTypeOfTypeOfTypeOfType
-    // TypeRefOfTypeOfTypeOfTypeOfTypeOfType
     fn encode_field(field: FullTypeFields) -> Field {
+        let ty = Self::encode_type(field.type_.type_ref);
+        let mut field_def = Field::new(field.name, ty);
+        field_def.description(field.description);
+        field_def
+    }
+
+    fn encode_type(ty: impl introspect::OfType) -> FieldType {
         use introspect::introspection_query::__TypeKind::*;
-        let type_ref = field.type_.type_ref;
-
-        match type_ref.kind {
-            SCALAR | OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT => {
-                let ty = FieldType::new_type(type_ref.name.unwrap(), true, None);
-                let mut field_def = Field::new(field.name, ty);
-                field_def.description(field.description);
-                field_def
-            }
-            // Type!
+        match ty.kind() {
+            SCALAR | OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT => FieldType::Type {
+                ty: ty.name().unwrap().to_string(),
+                is_nullable: true,
+                default: None,
+            },
             NON_NULL => {
-                let type_ref = type_ref.of_type.unwrap();
-                match type_ref.kind {
-                    SCALAR | OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT => {
-                        let ty = FieldType::new_type(type_ref.name.unwrap(), false, None);
-                        let mut field_def = Field::new(field.name, ty);
-                        field_def.description(field.description);
-                        field_def
-                    }
-                    // [Type]!
-                    LIST => {
-                        let type_ref = type_ref.of_type.unwrap();
-                        match type_ref.kind {
-                            SCALAR | OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT => {
-                                let ty = FieldType::new_type(type_ref.name.unwrap(), true, None);
-                                let list = FieldType::new_list(ty, false);
-                                let mut field_def = Field::new(field.name, list);
-                                field_def.description(field.description);
-                                field_def
-                            }
-                            // [[Type]!]
-                            LIST => {
-                                let type_ref = type_ref.of_type.unwrap();
-                                match type_ref.kind {
-                                    SCALAR | OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT => {
-                                        let ty =
-                                            FieldType::new_type(type_ref.name.unwrap(), true, None);
-                                        let list1 = FieldType::new_list(ty, false);
-                                        let list2 = FieldType::new_list(list1, true);
-                                        let mut field_def = Field::new(field.name, list2);
-                                        field_def.description(field.description);
-                                        field_def
-                                    }
-                                    LIST => panic!("Cannot nest more than 2 lists."),
-                                    // [[Type]!]!
-                                    NON_NULL => {
-                                        let type_ref = type_ref.of_type.unwrap();
-                                        match type_ref.kind {
-                                            SCALAR | OBJECT | INTERFACE | UNION | ENUM
-                                            | INPUT_OBJECT => {
-                                                let ty = FieldType::new_type(
-                                                    type_ref.name.unwrap(),
-                                                    true,
-                                                    None,
-                                                );
-                                                let list1 = FieldType::new_list(ty, false);
-                                                let list2 = FieldType::new_list(list1, false);
-                                                let mut field_def = Field::new(field.name, list2);
-                                                field_def.description(field.description);
-                                                field_def
-                                            }
-                                            LIST => panic!("Cannot nest more than 2 lists."),
-                                            ty => panic!("Unknown type: {:?}", ty),
-                                        }
-                                    }
-                                    ty => panic!("Unknown type: {:?}", ty),
-                                }
-                            }
-                            NON_NULL => {
-                                let type_ref = type_ref.of_type.unwrap();
-                                match type_ref.kind {
-                                    SCALAR | OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT => {
-                                        let field_type = FieldType::Type {
-                                            ty: type_ref.name.unwrap_or_else(String::new),
-                                            is_nullable: false,
-                                            default: None,
-                                        };
-                                        let mut field_def = Field::new(field.name, field_type);
-                                        field_def.description(field.description);
-                                        field_def
-                                    }
-                                    LIST => panic!("Cannot nest more than 2 lists."),
-                                    ty => panic!("Unknown type: {:?}", ty),
-                                }
-                            }
-                            ty => panic!("Unknown type: {:?}", ty),
-                        }
-                    }
-                    ty => panic!("Unknown type: {:?}", ty),
-                }
+                let mut ty = Self::encode_type(ty.of_type().unwrap());
+                ty.set_is_nullable(false);
+                ty
             }
-            // [Type]
             LIST => {
-                let type_ref = type_ref.of_type.unwrap();
-                match type_ref.kind {
-                    SCALAR | OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT => {
-                        let ty = FieldType::new_type(type_ref.name.unwrap(), true, None);
-                        let list = FieldType::new_list(ty, true);
-                        let mut field_def = Field::new(field.name, list);
-                        field_def.description(field.description);
-                        field_def
-                    }
-                    // [[Type]]
-                    LIST => {
-                        let type_ref = type_ref.of_type.unwrap();
-                        match type_ref.kind {
-                            SCALAR | OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT => {
-                                let ty = FieldType::new_type(type_ref.name.unwrap(), true, None);
-                                let list1 = FieldType::new_list(ty, true);
-                                let list2 = FieldType::new_list(list1, true);
-                                let mut field_def = Field::new(field.name, list2);
-                                field_def.description(field.description);
-                                field_def
-                            }
-                            LIST => panic!("Cannot nest more than 2 lists."),
-                            // [[Type!]]
-                            NON_NULL => {
-                                let type_ref = type_ref.of_type.unwrap();
-                                match type_ref.kind {
-                                    SCALAR | OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT => {
-                                        let ty = FieldType::new_type(
-                                            type_ref.name.unwrap(),
-                                            false,
-                                            None,
-                                        );
-                                        let list1 = FieldType::new_list(ty, true);
-                                        let list2 = FieldType::new_list(list1, true);
-                                        let mut field_def = Field::new(field.name, list2);
-                                        field_def.description(field.description);
-                                        field_def
-                                    }
-                                    LIST => panic!("Cannot nest more than 2 lists."),
-                                    ty => panic!("Unknown type: {:?}", ty),
-                                }
-                            }
-                            ty => panic!("Unknown type: {:?}", ty),
-                        }
-                    }
-
-                    //[Type!]
-                    NON_NULL => {
-                        let type_ref = type_ref.of_type.unwrap();
-                        match type_ref.kind {
-                            SCALAR | OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT => {
-                                let ty = FieldType::new_type(type_ref.name.unwrap(), false, None);
-                                let list1 = FieldType::new_list(ty, true);
-                                let list2 = FieldType::new_list(list1, true);
-                                let mut field_def = Field::new(field.name, list2);
-                                field_def.description(field.description);
-                                field_def
-                            }
-                            // [[Type]]!
-                            LIST => {
-                                let type_ref = type_ref.of_type.unwrap();
-                                match type_ref.kind {
-                                    SCALAR | OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT => {
-                                        let ty =
-                                            FieldType::new_type(type_ref.name.unwrap(), true, None);
-                                        let list1 = FieldType::new_list(ty, true);
-                                        let list2 = FieldType::new_list(list1, false);
-                                        let mut field_def = Field::new(field.name, list2);
-                                        field_def.description(field.description);
-                                        field_def
-                                    }
-                                    LIST => panic!("Cannot nest more than 2 lists."),
-                                    // [[Type!]]!
-                                    NON_NULL => {
-                                        let type_ref = type_ref.of_type.unwrap();
-                                        match type_ref.kind {
-                                            SCALAR | OBJECT | INTERFACE | UNION | ENUM
-                                            | INPUT_OBJECT => {
-                                                let ty = FieldType::new_type(
-                                                    type_ref.name.unwrap(),
-                                                    false,
-                                                    None,
-                                                );
-                                                let list1 = FieldType::new_list(ty, true);
-                                                let list2 = FieldType::new_list(list1, false);
-                                                let mut field_def = Field::new(field.name, list2);
-                                                field_def.description(field.description);
-                                                field_def
-                                            }
-                                            LIST => panic!("Cannot nest more than 2 lists."),
-                                            ty => panic!("Unknown type: {:?}", ty),
-                                        }
-                                    }
-                                    ty => panic!("Unknown type: {:?}", ty),
-                                }
-                            }
-                            ty => panic!("Unknown type: {:?}", ty),
-                        }
-                    }
-                    ty => panic!("Unknown type: {:?}", ty),
+                let ty = Self::encode_type(ty.of_type().unwrap());
+                FieldType::List {
+                    ty: Box::new(ty),
+                    is_nullable: false,
                 }
             }
             Other(ty) => panic!("Unknown type: {}", ty),

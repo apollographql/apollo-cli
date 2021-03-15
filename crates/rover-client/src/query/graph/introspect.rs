@@ -48,3 +48,84 @@ fn build_response(
         Err(msg) => Err(RoverClientError::IntrospectionError { msg: msg.into() }),
     }
 }
+
+pub trait OfType {
+    type TypeRef: OfType;
+
+    fn kind(&self) -> &introspection_query::__TypeKind;
+    fn name(&self) -> Option<&str>;
+    fn of_type(self) -> Option<Self::TypeRef>;
+}
+
+macro_rules! impl_of_type {
+    ($target:ty, $assoc:ty) => {
+        impl OfType for $target {
+            type TypeRef = $assoc;
+
+            fn kind(&self) -> &introspection_query::__TypeKind {
+                &self.kind
+            }
+
+            fn name(&self) -> Option<&str> {
+                self.name.as_deref()
+            }
+
+            fn of_type(self) -> Option<Self::TypeRef> {
+                self.of_type
+            }
+        }
+    };
+}
+
+impl_of_type!(
+    introspection_query::TypeRef,
+    introspection_query::TypeRefOfType
+);
+
+impl_of_type!(
+    introspection_query::TypeRefOfType,
+    introspection_query::TypeRefOfTypeOfType
+);
+
+impl_of_type!(
+    introspection_query::TypeRefOfTypeOfType,
+    introspection_query::TypeRefOfTypeOfTypeOfType
+);
+
+impl_of_type!(
+    introspection_query::TypeRefOfTypeOfTypeOfType,
+    introspection_query::TypeRefOfTypeOfTypeOfTypeOfType
+);
+
+impl_of_type!(
+    introspection_query::TypeRefOfTypeOfTypeOfTypeOfType,
+    introspection_query::TypeRefOfTypeOfTypeOfTypeOfTypeOfType
+);
+
+impl_of_type!(
+    introspection_query::TypeRefOfTypeOfTypeOfTypeOfTypeOfType,
+    introspection_query::TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfType
+);
+
+impl_of_type!(
+    introspection_query::TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfType,
+    introspection_query::TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfTypeOfType
+);
+
+// NOTE(lrlna): This is a **hack**. This makes sure that the last possible
+// generated ofType by graphql_client can return a None for of_type method.
+impl OfType for introspection_query::TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfTypeOfType {
+    type TypeRef = introspection_query::TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfTypeOfType;
+
+    fn kind(&self) -> &introspection_query::__TypeKind {
+        &self.kind
+    }
+
+    fn name(&self) -> Option<&str> {
+        self.name.as_deref()
+    }
+
+    fn of_type(self) -> Option<Self::TypeRef> {
+        None
+    }
+}
