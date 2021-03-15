@@ -5,7 +5,7 @@ use std::fmt::{self, Display};
 pub struct EnumDef {
     name: String,
     description: Option<String>,
-    variants: Vec<String>,
+    values: Vec<String>,
 }
 
 impl EnumDef {
@@ -14,7 +14,7 @@ impl EnumDef {
         Self {
             name,
             description: None,
-            variants: Vec::new(),
+            values: Vec::new(),
         }
     }
 
@@ -23,9 +23,9 @@ impl EnumDef {
         self.description = description;
     }
 
-    /// Set the EnumDef's variants.
-    pub fn variant(&mut self, variant: String) {
-        self.variants.push(variant)
+    /// Set the EnumDef's values.
+    pub fn value(&mut self, value: String) {
+        self.values.push(value)
     }
 }
 
@@ -35,13 +35,13 @@ impl Display for EnumDef {
             writeln!(f, "\"\"\"\n{}\n\"\"\"", description)?;
         }
 
-        let mut variants = String::new();
-        for variant in &self.variants {
-            variants += &format!("\n  {}", variant);
+        let mut values = String::new();
+        for value in &self.values {
+            values += &format!("\n  {}", value);
         }
 
         write!(f, "enum {} {{", self.name)?;
-        write!(f, "{}", variants)?;
+        write!(f, "{}", values)?;
         writeln!(f, "\n}}")
     }
 }

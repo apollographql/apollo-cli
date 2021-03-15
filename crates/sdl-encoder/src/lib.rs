@@ -190,10 +190,10 @@ mod tests {
         schema.object(object_def);
 
         // enum definition
-        let mut enum_ = EnumDef::new("VeryGoodCats".to_string());
-        enum_.variant("NORI".to_string());
-        enum_.variant("CHASHU".to_string());
-        schema.enum_(enum_);
+        let mut enum_def = EnumDef::new("VeryGoodCats".to_string());
+        enum_def.value("NORI".to_string());
+        enum_def.value("CHASHU".to_string());
+        schema.enum_(enum_def);
 
         let mut scalar = ScalarDef::new("NoriCacheControl".to_string());
         scalar.description(Some("Scalar description".to_string()));

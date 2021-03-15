@@ -54,7 +54,7 @@ impl Schema {
                 let mut enum_def = EnumDef::new(type_.full_type.name.unwrap_or_else(String::new));
                 if let Some(enums) = type_.full_type.enum_values {
                     for enum_ in enums {
-                        enum_def.variant(enum_.name);
+                        enum_def.value(enum_.name);
                     }
                 }
                 sdl.enum_(enum_def);
