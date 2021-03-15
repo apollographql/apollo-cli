@@ -72,8 +72,6 @@ fn do_update_check(checked: &mut bool) -> Result<()> {
             .box_alignment(Alignment::Left)
             .build()
             .eprint(message);
-    } else {
-        eprintln!("Rover is up to date!");
     }
 
     *checked = true;
