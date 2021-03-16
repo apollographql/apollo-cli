@@ -1,6 +1,6 @@
 mod check;
-mod introspect;
 mod fetch;
+mod introspect;
 mod push;
 
 use serde::Serialize;

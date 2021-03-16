@@ -38,10 +38,10 @@ impl Display for Directive {
         let mut locations = String::new();
         for (i, location) in self.locations.iter().enumerate() {
             if i == 0 {
-                locations += &location.to_string();
+                locations += location;
                 continue;
             }
-            locations += &format!(" | {}", location.to_string());
+            locations += &format!(" | {}", location);
         }
 
         writeln!(f, "directive @{} on {}", &self.name, locations)

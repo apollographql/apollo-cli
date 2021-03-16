@@ -1,6 +1,8 @@
 //! Schema code generation module used to work with Introspection result.
 use crate::query::graph::introspect;
-use sdl_encoder::{Directive, EnumDef, Field, FieldType, ObjectDef, ScalarDef, Schema as SDL};
+use sdl_encoder::{
+    Directive, EnumDef, Field, FieldType, ObjectDef, ScalarDef, Schema as SDL, Union,
+};
 use serde::Deserialize;
 use std::convert::TryFrom;
 
@@ -67,6 +69,16 @@ impl Schema {
                     ScalarDef::new(type_.full_type.name.unwrap_or_else(String::new));
                 scalar_def.description(type_.full_type.description);
                 sdl.scalar(scalar_def);
+            }
+            __TypeKind::UNION => {
+                let mut union_def = Union::new(type_.full_type.name.unwrap_or_else(String::new));
+                union_def.description(type_.full_type.description);
+                if let Some(possible_types) = type_.full_type.possible_types {
+                    for ty in possible_types {
+                        union_def.member(ty.type_ref.name.unwrap_or_else(String::new));
+                    }
+                }
+                sdl.union(union_def);
             }
             __TypeKind::ENUM => {
                 let mut enum_def = EnumDef::new(type_.full_type.name.unwrap_or_else(String::new));

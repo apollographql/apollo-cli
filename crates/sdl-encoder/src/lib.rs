@@ -31,8 +31,8 @@
 
 //! // enum definition
 //! let mut enum_ = EnumDef::new("VeryGoodCats".to_string());
-//! enum_.variant("NORI".to_string());
-//! enum_.variant("CHASHU".to_string());
+//! enum_.value("NORI".to_string());
+//! enum_.value("CHASHU".to_string());
 //! schema.enum_(enum_);
 
 //! let mut scalar = ScalarDef::new("NoriCacheControl".to_string());
@@ -98,6 +98,9 @@ pub use object_def::ObjectDef;
 mod scalar_def;
 pub use scalar_def::ScalarDef;
 
+mod union_def;
+pub use union_def::Union;
+
 mod directive_def;
 pub use directive_def::Directive;
 
@@ -150,9 +153,14 @@ impl Schema {
         self.buf.push_str(&enum_.to_string());
     }
 
-    /// Adds a new Enum type definition
+    /// Adds a new Scalar type definition
     pub fn scalar(&mut self, scalar: ScalarDef) {
         self.buf.push_str(&scalar.to_string());
+    }
+
+    /// Adds a new Union type definition
+    pub fn union(&mut self, union: Union) {
+        self.buf.push_str(&union.to_string());
     }
 
     /// Return the encoded SDL string after all types have been
@@ -215,6 +223,14 @@ mod tests {
         scalar.description(Some("Scalar description".to_string()));
         schema.scalar(scalar);
 
+        let mut union_def = Union::new("Cat".to_string());
+        union_def.description(Some(
+            "A union of all cats represented within a household.".to_string(),
+        ));
+        union_def.member("NORI".to_string());
+        union_def.member("CHASHU".to_string());
+        schema.union(union_def);
+
         // input definition
         let input_def = InputDef::new("SpaceCat".to_string(), field);
         schema.input(input_def);
@@ -252,6 +268,10 @@ mod tests {
                 Scalar description
                 """
                 scalar NoriCacheControl
+                """
+                A union of all cats represented within a household.
+                """
+                union Cat = NORI | CHASHU
                 input SpaceCat {
                   """
                   Very good cats
